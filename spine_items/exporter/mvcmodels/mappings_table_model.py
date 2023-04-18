@@ -57,7 +57,7 @@ class MappingsTableModel(QAbstractTableModel):
         """
         super().__init__(parent)
         if mappings is None:
-            mappings = dict()
+            mappings = {}
         self._names = list(mappings)
         self._mappings = mappings
 
@@ -98,14 +98,12 @@ class MappingsTableModel(QAbstractTableModel):
             if role in (Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole):
                 order = str(index.row() + 1)
                 if order.endswith(("11", "12", "13")):
-                    return order + "th"
+                    return f"{order}th"
                 if order.endswith("1"):
-                    return order + "st"
+                    return f"{order}st"
                 if order.endswith("2"):
-                    return order + "nd"
-                if order.endswith("3"):
-                    return order + "rd"
-                return order + "th"
+                    return f"{order}nd"
+                return f"{order}rd" if order.endswith("3") else f"{order}th"
             if role == Qt.TextAlignmentRole:
                 return Qt.AlignCenter
         if role >= Qt.ItemDataRole.UserRole:
@@ -353,11 +351,11 @@ class MappingsTableModel(QAbstractTableModel):
         Return:
             set of int: enabled mapping row indexes.
         """
-        rows = set()
-        for row in range(len(self._names)):
-            if self._mappings[self._names[row]].enabled:
-                rows.add(row)
-        return rows
+        return {
+            row
+            for row in range(len(self._names))
+            if self._mappings[self._names[row]].enabled
+        }
 
     def reset(self, mappings):
         self.beginResetModel()

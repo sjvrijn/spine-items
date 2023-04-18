@@ -22,7 +22,7 @@ class PreviewTableModel(QAbstractTableModel):
 
     def __init__(self):
         super().__init__()
-        self._table = list()
+        self._table = []
         self._mapping_name = None
         self._table_name = None
         self._row_to_map_color = {}
@@ -40,9 +40,11 @@ class PreviewTableModel(QAbstractTableModel):
         self.endResetModel()
 
     def columnCount(self, parent=QModelIndex()):
-        if not self._table:
-            return 0
-        return min(max(len(row) for row in self._table), self.MAX_COLUMNS)
+        return (
+            min(max(len(row) for row in self._table), self.MAX_COLUMNS)
+            if self._table
+            else 0
+        )
 
     def data(self, index, role=Qt.ItemDataRole.DisplayRole):
         if role == Qt.ItemDataRole.DisplayRole:
@@ -65,9 +67,7 @@ class PreviewTableModel(QAbstractTableModel):
         return index.row() > self._max_mapping_row and index.column() > self._max_mapping_column
 
     def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):
-        if role == Qt.ItemDataRole.DisplayRole:
-            return section + 1
-        return None
+        return section + 1 if role == Qt.ItemDataRole.DisplayRole else None
 
     def mapping_name(self):
         """Returns current mapping's name.
@@ -104,7 +104,7 @@ class PreviewTableModel(QAbstractTableModel):
         self._column_to_map_color = {}
         # Compute in-pivot color
         positions = list(mapping_colors)
-        is_pivoted = any([p < 0 for p in positions[:-1]])
+        is_pivoted = any(p < 0 for p in positions[:-1])
         if is_pivoted:
             p = positions.pop(-1)
             self._in_pivot_color = mapping_colors[p]

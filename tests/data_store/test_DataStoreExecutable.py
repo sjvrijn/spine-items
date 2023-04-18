@@ -58,7 +58,9 @@ class TestDataStoreExecutable(unittest.TestCase):
         logger = mock.MagicMock()
         with mock.patch("spine_items.data_store.executable_item.convert_to_sqlalchemy_url") as mock_convert_url:
             mock_convert_url.return_value = "database.sqlite"
-            item = ExecutableItem.from_dict(item_dict, name, self._temp_dir.name, None, dict(), logger)
+            item = ExecutableItem.from_dict(
+                item_dict, name, self._temp_dir.name, None, {}, logger
+            )
             mock_convert_url.assert_called_once()
             self.assertIsInstance(item, ExecutableItem)
             self.assertEqual("Data Store", item.item_type())
@@ -86,7 +88,7 @@ class TestDataStoreExecutable(unittest.TestCase):
         self.assertEqual(len(resources), 1)
         resource = resources[0]
         self.assertEqual(resource.type_, "database")
-        self.assertEqual(resource.url, "sqlite:///" + str(db_file_path))
+        self.assertEqual(resource.url, f"sqlite:///{str(db_file_path)}")
         self.assertEqual(resource.label, "db_url@name")
 
     def test_output_resources_forward(self):
@@ -99,7 +101,7 @@ class TestDataStoreExecutable(unittest.TestCase):
         self.assertEqual(len(resources), 1)
         resource = resources[0]
         self.assertEqual(resource.type_, "database")
-        self.assertEqual(resource.url, "sqlite:///" + str(db_file_path))
+        self.assertEqual(resource.url, f"sqlite:///{str(db_file_path)}")
         self.assertEqual(resource.label, "db_url@name")
 
 

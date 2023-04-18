@@ -45,19 +45,24 @@ def exported_files_as_resources(item_name, exported_files, data_dir, output_chan
             label: files for label, files in _collect_execution_manifests(data_dir).items() if label in out_labels
         }
         exported_files = {label: [str(Path(data_dir, f)) for f in files] for label, files in manifests.items()}
-    resources = list()
-    if exported_files is not None:
-        for channel in output_channels:
-            if channel.out_label:
-                files = {f for f in exported_files.get(channel.out_label, []) if Path(f).exists()}
-                if files:
-                    resources += [file_resource_in_pack(item_name, channel.out_label, f) for f in files]
-                else:
-                    resources.append(transient_file_resource(item_name, channel.out_label))
+    resources = []
+    if exported_files is None:
+        resources.extend(
+            transient_file_resource(item_name, channel.out_label)
+            for channel in output_channels
+            if channel.out_label
+        )
     else:
         for channel in output_channels:
             if channel.out_label:
-                resources.append(transient_file_resource(item_name, channel.out_label))
+                if files := {
+                    f
+                    for f in exported_files.get(channel.out_label, [])
+                    if Path(f).exists()
+                }:
+                    resources += [file_resource_in_pack(item_name, channel.out_label, f) for f in files]
+                else:
+                    resources.append(transient_file_resource(item_name, channel.out_label))
     return resources, exported_files
 
 
@@ -76,7 +81,7 @@ def _collect_execution_manifests(data_dir):
             with open(path) as manifest_file:
                 manifest = json.load(manifest_file)
             for out_file_name, paths in manifest.items():
-                relative_paths = list()
+                relative_paths = []
                 for file_path in paths:
                     p = Path(file_path)
                     if p.is_absolute():
@@ -92,6 +97,6 @@ def _collect_execution_manifests(data_dir):
                     else:
                         relative_paths.append(file_path)
                 if manifests is None:
-                    manifests = dict()
-                manifests.setdefault(out_file_name, list()).extend(paths)
+                    manifests = {}
+                manifests.setdefault(out_file_name, []).extend(paths)
     return manifests

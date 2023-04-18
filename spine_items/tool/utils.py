@@ -24,7 +24,7 @@ import re
 
 def flatten_file_path_duplicates(file_paths, logger, log_duplicates=False):
     """Flattens the extra duplicate dimension in file_paths."""
-    flattened = dict()
+    flattened = {}
     for required_file, paths in file_paths.items():
         if paths is not None:
             pick = paths[0]
@@ -72,7 +72,7 @@ def find_file(filename, resources):
         list: Full paths to file if found, None if not found
     """
     filename = os.path.normcase(filename)
-    found_file_paths = list()
+    found_file_paths = []
     for file_path in file_paths_from_resources(resources):
         _, file_candidate = os.path.split(file_path)
         if os.path.normcase(file_candidate) == filename:
@@ -92,12 +92,12 @@ def find_last_output_files(output_files, output_dir):
         dict: a mapping from a file name pattern to the path of the most recent files in the results archive.
     """
     if not os.path.exists(output_dir):
-        return dict()
-    recent_output_files = dict()
+        return {}
+    recent_output_files = {}
     file_patterns = list(output_files)
     result = _find_last_output_dir(output_dir)
     if result is None:
-        return dict()
+        return {}
     full_archive_path = result[1]
     for pattern in list(file_patterns):
         full_path_pattern = os.path.join(full_archive_path, pattern)
@@ -105,7 +105,7 @@ def find_last_output_files(output_files, output_dir):
         for path in glob.glob(full_path_pattern):
             if os.path.exists(path):
                 files_found = True
-                file_list = recent_output_files.setdefault(pattern, list())
+                file_list = recent_output_files.setdefault(pattern, [])
                 file_list.append(os.path.normpath(path))
         if files_found:
             file_patterns.remove(pattern)
@@ -131,9 +131,7 @@ def _find_last_output_dir(output_dir, depth=0):
             continue
         if result_directory_pattern.match(path.name) is not None:
             time_stamp = datetime.fromisoformat(path.name.replace(".", ":"))
-            if latest is None:
-                latest = (time_stamp, path)
-            elif latest[0] < time_stamp:
+            if latest is None or latest[0] < time_stamp:
                 latest = (time_stamp, path)
         elif depth < 1:
             subdir_latest = _find_last_output_dir(str(path), depth + 1)

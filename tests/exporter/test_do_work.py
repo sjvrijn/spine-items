@@ -38,7 +38,7 @@ class TestWithCsvWriter(unittest.TestCase):
     def setUpClass(cls):
         cls._temp_dir = TemporaryDirectory()
         db_file = os.path.join(cls._temp_dir.name, "test_db.sqlite")
-        cls._url = "sqlite:///" + db_file
+        cls._url = f"sqlite:///{db_file}"
         db_map = DatabaseMapping(cls._url, create=True)
         try:
             import_object_classes(db_map, ("oc1", "oc2"))
@@ -60,7 +60,7 @@ class TestWithCsvWriter(unittest.TestCase):
         self.assertTrue(os.path.exists(out_path))
         with open(out_path) as input_:
             csv_reader = reader(input_)
-            table = [row for row in csv_reader]
+            table = list(csv_reader)
         expected = [["oc1", "o11"], ["oc1", "o12"], ["oc2", "o21"], ["oc2", "o22"], ["oc2", "o23"]]
         self.assertEqual(table, expected)
 

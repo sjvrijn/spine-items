@@ -232,8 +232,8 @@ class ExecutableItem(DBWriterExecutableItemBase):
         Raises:
             OSError: If creating a directory fails.
         """
-        failed_files = list()
-        saved_files = list()
+        failed_files = []
+        saved_files = []
         for pattern in self._tool_specification.outputfiles:
             # Create subdirectories if necessary
             dst_subdir, fname_pattern = os.path.split(pattern)
@@ -447,8 +447,7 @@ class ExecutableItem(DBWriterExecutableItemBase):
                 file_paths = flatten_file_path_duplicates(
                     self._find_input_files(forward_resources), self._logger, log_duplicates=True
                 )
-                not_found = [k for k, v in file_paths.items() if v is None]
-                if not_found:
+                if not_found := [k for k, v in file_paths.items() if v is None]:
                     self._logger.msg_error.emit(f"Required file(s) <b>{', '.join(not_found)}</b> not found")
                     return ItemExecutionFinishState.FAILURE
                 self._logger.msg.emit(f"*** Copying input files to {work_or_source} directory ***")
@@ -485,8 +484,7 @@ class ExecutableItem(DBWriterExecutableItemBase):
                     return ItemExecutionFinishState.FAILURE
             else:
                 self._logger.msg_warning.emit(
-                    f"Project is not self-contained. Please make sure all Tool specification "
-                    f"files are in the project directory."
+                    'Project is not self-contained. Please make sure all Tool specification files are in the project directory.'
                 )
                 return ItemExecutionFinishState.FAILURE
         self._tool_instance = self._tool_specification.create_tool_instance(
@@ -534,7 +532,7 @@ class ExecutableItem(DBWriterExecutableItemBase):
         Returns:
             Dictionary mapping required files to path where they are found, or to None if not found
         """
-        file_paths = dict()
+        file_paths = {}
         for required_path in self._tool_specification.inputfiles:
             _, filename = os.path.split(required_path)
             if not filename:
@@ -553,18 +551,17 @@ class ExecutableItem(DBWriterExecutableItemBase):
             dict: Dictionary of optional input file paths or an empty dictionary if no files found. Key is the
                 optional input item and value is a list of paths that matches the item.
         """
-        file_paths = dict()
+        file_paths = {}
         paths_in_resources = file_paths_from_resources(resources)
         for file_path in self._tool_specification.inputfiles_opt:
             _, pattern = os.path.split(file_path)
             if not pattern:
                 # It's a directory -> skip
                 continue
-            found_files = _find_files_in_pattern(pattern, paths_in_resources)
-            if not found_files:
-                self._logger.msg_warning.emit(f"\tNo files matching pattern <b>{pattern}</b> found")
-            else:
+            if found_files := _find_files_in_pattern(pattern, paths_in_resources):
                 file_paths[file_path] = found_files
+            else:
+                self._logger.msg_warning.emit(f"\tNo files matching pattern <b>{pattern}</b> found")
         return file_paths
 
     def _handle_output_files(self, return_code, filter_id, forward_resources, execution_dir):
@@ -642,7 +639,7 @@ class ExecutableItem(DBWriterExecutableItemBase):
         Returns:
             dict: a map from source path to destination path
         """
-        destination_paths = dict()
+        destination_paths = {}
         for dst, src_paths in paths.items():
             for src_path in src_paths:
                 if not os.path.exists(src_path):
@@ -744,8 +741,7 @@ def _create_output_dir_timestamp():
         stamp = datetime.datetime.fromtimestamp(time.time())
     except OverflowError:
         return ""
-    extension = stamp.strftime("%Y-%m-%dT%H.%M.%S")
-    return extension
+    return stamp.strftime("%Y-%m-%dT%H.%M.%S")
 
 
 def _execution_directory(work_dir, tool_specification):
@@ -772,11 +768,12 @@ def _execution_directory(work_dir, tool_specification):
         str: Full path to execution dir
     """
     if work_dir is not None:
-        basedir = os.path.join(work_dir, _unique_dir_name(tool_specification))
-        return basedir
-    if not tool_specification.path:
-        return tool_specification.default_execution_dir
-    return tool_specification.path
+        return os.path.join(work_dir, _unique_dir_name(tool_specification))
+    return (
+        tool_specification.path
+        if tool_specification.path
+        else tool_specification.default_execution_dir
+    )
 
 
 def _find_files_in_pattern(pattern, available_file_paths):
@@ -795,4 +792,4 @@ def _find_files_in_pattern(pattern, available_file_paths):
 
 def _unique_dir_name(tool_specification):
     """Builds a unique name for Tool's work directory."""
-    return tool_specification.short_name + "__" + uuid.uuid4().hex + "__toolbox"
+    return f"{tool_specification.short_name}__{uuid.uuid4().hex}__toolbox"

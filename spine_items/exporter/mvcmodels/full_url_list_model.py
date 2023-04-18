@@ -19,7 +19,7 @@ class FullUrlListModel(QAbstractListModel):
             parent (QObject, optional): model's parent
         """
         super().__init__(parent)
-        self._urls = list()
+        self._urls = []
 
     def append(self, url):
         """
@@ -36,9 +36,7 @@ class FullUrlListModel(QAbstractListModel):
     def data(self, index, role=Qt.ItemDataRole.DisplayRole):
         if not index.isValid():
             return None
-        if role == Qt.ItemDataRole.DisplayRole:
-            return self._urls[index.row()]
-        return None
+        return self._urls[index.row()] if role == Qt.ItemDataRole.DisplayRole else None
 
     def rowCount(self, parent=QModelIndex()):
         return len(self._urls)

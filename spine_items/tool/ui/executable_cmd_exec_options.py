@@ -101,6 +101,5 @@ class Ui_Form(object):
         self.label_2.setText(QCoreApplication.translate("Form", u"Command", None))
         self.lineEdit_command.setPlaceholderText(QCoreApplication.translate("Form", u"Type command here...", None))
         self.label.setText(QCoreApplication.translate("Form", u"Shell", None))
-        pass
     # retranslateUi
 

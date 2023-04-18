@@ -71,7 +71,7 @@ class ClassRename(QObject):
         indexes = self._ui.class_rename_table_view.selectionModel().selectedIndexes()
         if not indexes:
             return
-        rows = set(self._sorted_rename_table_model.mapToSource(i).row() for i in indexes)
+        rows = {self._sorted_rename_table_model.mapToSource(i).row() for i in indexes}
         if len(rows) == 1:
             self._undo_stack.push(RemoveRow("remove class", self._rename_table_model, next(iter(rows))))
         else:

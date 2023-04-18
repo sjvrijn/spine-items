@@ -98,9 +98,11 @@ class RenamingSettings(FilterSettings):
         self.name_map = name_map
 
     def __eq__(self, other):
-        if not isinstance(other, RenamingSettings):
-            return NotImplemented
-        return self.name_map == other.name_map
+        return (
+            self.name_map == other.name_map
+            if isinstance(other, RenamingSettings)
+            else NotImplemented
+        )
 
     def filter_config(self):
         """See base class."""
@@ -150,16 +152,19 @@ class ParameterRenamingSettings(RenamingSettings):
 
     def filter_config(self):
         """See base class."""
-        name_map = dict()
+        name_map = {}
         for class_name, param_renames in self.name_map.items():
-            useful = {name: rename for name, rename in param_renames.items() if rename and name != rename}
-            if useful:
+            if useful := {
+                name: rename
+                for name, rename in param_renames.items()
+                if rename and name != rename
+            }:
                 name_map[class_name] = useful
         return parameter_renamer_config(name_map)
 
     def report_inconsistencies(self):
         messages = super().report_inconsistencies()
-        if any(not klass for klass in self.name_map):
+        if not all(self.name_map):
             messages.append("Class name(s) missing in specification.")
         return messages
 
@@ -189,14 +194,13 @@ class ValueTransformSettings(FilterSettings):
 
     def filter_config(self):
         # Remove no-op instructions.
-        instructions = dict()
+        instructions = {}
         for class_name, parameter_transformation in self.instructions.items():
-            useful = {
+            if useful := {
                 param_name: instructions
                 for param_name, instructions in parameter_transformation.items()
                 if instructions
-            }
-            if useful:
+            }:
                 instructions[class_name] = useful
         return value_transformer_config(instructions)
 

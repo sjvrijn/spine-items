@@ -80,8 +80,8 @@ class Exporter(ProjectItem):
         self._toolbox = toolbox
         self._append_output_time_stamps = output_time_stamps
         self._cancel_on_error = cancel_on_error
-        self._output_filenames = dict()
-        self._export_list_items = dict()
+        self._output_filenames = {}
+        self._export_list_items = {}
         self._full_url_model = FullUrlListModel()
         self._exported_files = None
         self._notifications = _Notifications()
@@ -179,28 +179,27 @@ class Exporter(ProjectItem):
     def _set_properties_message(self):
         if self._specification is None:
             message = ""
+        elif self._specification.is_exporting_multiple_files():
+            message = (
+                f"Currently exporting multiple files in {self._specification.output_format.value} format."
+                " The file names are given by the specification."
+            )
         else:
-            if self._specification.is_exporting_multiple_files():
-                message = (
-                    f"Currently exporting multiple files in {self._specification.output_format.value} format."
-                    " The file names are given by the specification."
-                )
-            else:
-                message = (
-                    f"Currently exporting in {self._specification.output_format.value} format."
-                    " The Output labels below are treated as file names."
-                )
+            message = (
+                f"Currently exporting in {self._specification.output_format.value} format."
+                " The Output labels below are treated as file names."
+            )
         self._properties_ui.message_label.setText(message)
 
     def upstream_resources_updated(self, resources):
         """See base class."""
         database_resources = [r for r in resources if r.type_ == "database"]
         resources_by_labels = {r.label: r for r in database_resources}  # legacy: when in_label was url
-        in_labels = set(r.label for r in database_resources)
+        in_labels = {r.label for r in database_resources}
         inactive_channels = {c.in_label: c for c in self._output_channels}
         old_output_channels = self._output_channels
         self._output_channels = []
-        inactive_channels.update({c.in_label: c for c in self._inactive_output_channels})
+        inactive_channels |= {c.in_label: c for c in self._inactive_output_channels}
         for in_label in in_labels:
             inactive = inactive_channels.pop(in_label, None)
             if inactive is not None:
@@ -215,7 +214,7 @@ class Exporter(ProjectItem):
                 else:
                     self._output_channels.append(OutputChannel(in_label, self.name))
         self._inactive_output_channels = list(inactive_channels.values())
-        self._full_url_model.set_urls(set(r.url for r in database_resources))
+        self._full_url_model.set_urls({r.url for r in database_resources})
         if self._output_channels != old_output_channels:
             self._resources_to_successors_changed()
         if self._active:
@@ -284,7 +283,7 @@ class Exporter(ProjectItem):
                 self._notifications.unrecognized_extension = True
                 return
             output_formats.add(output_format)
-        if len(output_formats) == 0:
+        if not output_formats:
             self._notifications.unrecognized_extension = False
             return
         if len(output_formats) > 1:
@@ -453,7 +452,7 @@ class Exporter(ProjectItem):
         if self._exported_files is not None:
             data_dir_parts = Path(self.data_dir).parts
             for label, file_list in self._exported_files.items():
-                new_file_list = list()
+                new_file_list = []
                 for file_path in file_list:
                     new_file_path = Path()
                     for old_part, new_part in zip_longest(Path(file_path).parts, data_dir_parts):

@@ -60,7 +60,7 @@ class ToolSpecificationMenu(ItemSpecificationMenu):
                 "Please open the file manually.".format(ext)
             )
             return
-        main_program_url = "file:///" + file_path
+        main_program_url = f"file:///{file_path}"
         res = open_url(main_program_url)
         if not res:
             filename, file_extension = os.path.splitext(file_path)
@@ -80,5 +80,5 @@ class ToolSpecificationMenu(ItemSpecificationMenu):
         if not tool_specification.path:
             self._toolbox.msg_error.emit("Main program directory does not exist. Fix this in Tool spec editor.")
             return
-        path_url = "file:///" + tool_specification.path
+        path_url = f"file:///{tool_specification.path}"
         self._toolbox.open_anchor(QUrl(path_url, QUrl.TolerantMode))

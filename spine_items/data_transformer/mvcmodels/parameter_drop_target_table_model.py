@@ -24,11 +24,13 @@ class ParameterDropTargetTableModel(QAbstractTableModel):
     def dropMimeData(self, data, action, row, column, parent):
         if row < 0:
             row = self.rowCount()
-        rows = list()
+        rows = []
         parameters = pickle.loads(data.data(DROP_MIME_TYPE))
         for entity_class, parameter_list in parameters.items():
-            for parameter in parameter_list:
-                rows.append(self._make_drop_row(entity_class, parameter))
+            rows.extend(
+                self._make_drop_row(entity_class, parameter)
+                for parameter in parameter_list
+            )
         if len(rows) == 1:
             self._undo_stack.push(InsertRow("add parameter", self, row, rows[0]))
         else:

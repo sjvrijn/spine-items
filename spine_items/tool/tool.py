@@ -89,8 +89,8 @@ class Tool(DBWriterItemBase):
         self._specification_menu = None
         self._options = options if options is not None else {}
         self._kill_completed_processes = kill_completed_processes
-        self._resources_from_upstream = list()
-        self._resources_from_downstream = list()
+        self._resources_from_upstream = []
+        self._resources_from_downstream = []
 
     def set_up(self):
         execute_in_work = self.execute_in_work
@@ -277,10 +277,7 @@ class Tool(DBWriterItemBase):
             self._properties_ui.treeView_cmdline_args.setFocus()
 
     def undo_specification(self):
-        if self._specification is None:
-            return None
-        undo_spec = self._specification.clone()
-        return undo_spec
+        return None if self._specification is None else self._specification.clone()
 
     def do_set_specification(self, specification):
         """see base class"""
@@ -328,8 +325,9 @@ class Tool(DBWriterItemBase):
 
     def _update_tool_ui(self):
         """Updates Tool properties UI. Used when Tool specification is changed.."""
-        options_widget = self._properties_ui.horizontalLayout_options.takeAt(0)
-        if options_widget:
+        if options_widget := self._properties_ui.horizontalLayout_options.takeAt(
+            0
+        ):
             options_widget.widget().hide()
         if not self.specification():
             self._properties_ui.comboBox_tool.setCurrentIndex(-1)
@@ -339,8 +337,7 @@ class Tool(DBWriterItemBase):
         self._properties_ui.comboBox_tool.setCurrentText(self.specification().name)
         self._update_specification_menu()
         self._properties_ui.toolButton_tool_specification.setMenu(self._specification_menu)
-        options_widget = self._get_options_widget()
-        if options_widget:
+        if options_widget := self._get_options_widget():
             self._properties_ui.horizontalLayout_options.addWidget(options_widget)
             options_widget.show()
         if self._specification.tooltype == "python":
@@ -354,7 +351,7 @@ class Tool(DBWriterItemBase):
                 p = resolve_python_interpreter(exe)
                 self._properties_ui.label_jupyter.setText(f"[Basic console] {p}")
             else:
-                env = "" if not env else f"[{env}]"
+                env = f"[{env}]" if env else ""
                 self._properties_ui.label_jupyter.setText(f"[Jupyter Console] {k_spec_name} {env}")
         self._properties_ui.kill_consoles_check_box.setChecked(self._kill_completed_processes)
         self._update_kill_consoles_check_box_enabled()
@@ -370,7 +367,7 @@ class Tool(DBWriterItemBase):
         if not os.path.exists(self.output_dir):
             self._logger.msg_warning.emit(f"Tool <b>{self.name}</b> has no results. Click Execute to generate them.")
             return
-        url = "file:///" + self.output_dir
+        url = f"file:///{self.output_dir}"
         # noinspection PyTypeChecker, PyCallByClass, PyArgumentList
         res = open_url(url)
         if not res:
@@ -399,7 +396,7 @@ class Tool(DBWriterItemBase):
         """
         if not self.specification():
             return {}
-        file_paths = dict()
+        file_paths = {}
         for req_file_path in self.specification().inputfiles:
             # Just get the filename if there is a path attached to the file
             _, filename = os.path.split(req_file_path)
@@ -420,19 +417,20 @@ class Tool(DBWriterItemBase):
             self.add_notification(
                 f"Tool specification <b>{n}</b> path does not exist. Fix this in Tool specification editor."
             )
-        duplicates = self._input_file_model.duplicate_paths()
-        if duplicates:
-            self.add_notification("Duplicate input files:<br>{}".format("<br>".join(duplicates)))
+        if duplicates := self._input_file_model.duplicate_paths():
+            self.add_notification(f'Duplicate input files:<br>{"<br>".join(duplicates)}')
         file_paths = self._find_input_files(self._resources_from_upstream + self._resources_from_downstream)
         file_paths = flatten_file_path_duplicates(file_paths, self._logger)
-        not_found = [k for k, v in file_paths.items() if v is None]
-        if not_found:
+        if not_found := [k for k, v in file_paths.items() if v is None]:
             self.add_notification(
                 "File(s) {0} needed to execute this Tool are not provided by any input item. "
                 "Connect items that provide the required files to this Tool.".format(", ".join(not_found))
             )
-        missing_args = ", ".join(arg.arg for arg in self.cmd_line_args if isinstance(arg, LabelArg) and arg.missing)
-        if missing_args:
+        if missing_args := ", ".join(
+            arg.arg
+            for arg in self.cmd_line_args
+            if isinstance(arg, LabelArg) and arg.missing
+        ):
             self.add_notification(
                 f"The following command line argument(s) don't match any available resources: {missing_args}"
             )
@@ -487,7 +485,7 @@ class Tool(DBWriterItemBase):
         """Updates the file model and command line arguments."""
         resources = self._resources_from_upstream + self._resources_from_downstream
         self._input_file_model.update(resources)
-        update_args = list()
+        update_args = []
         resource_labels = {resource.label for resource in resources}
         for arg in self.cmd_line_args:
             if arg.arg in resource_labels:
@@ -508,10 +506,7 @@ class Tool(DBWriterItemBase):
     def item_dict(self):
         """Returns a dictionary corresponding to this item."""
         d = super().item_dict()
-        if not self.specification():
-            d["specification"] = ""
-        else:
-            d["specification"] = self.specification().name
+        d["specification"] = self.specification().name if self.specification() else ""
         d["execute_in_work"] = self.execute_in_work
         d["cmd_line_args"] = [arg.to_dict() for arg in self.cmd_line_args]
         if self._options:

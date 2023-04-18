@@ -95,7 +95,7 @@ class TestImporterExecutable(unittest.TestCase):
         self._write_simple_data(data_file)
         mapping = self._simple_input_data_mapping()
         database_path = Path(self._temp_dir.name, "database.sqlite")
-        database_url = "sqlite:///" + str(database_path)
+        database_url = f"sqlite:///{str(database_path)}"
         create_new_spine_database(database_url)
         gams_path = ""
         logger = mock.MagicMock()
@@ -124,7 +124,7 @@ class TestImporterExecutable(unittest.TestCase):
         data_file = Path(self._temp_dir.name, "data.dat")
         self._write_simple_data(data_file)
         database_path = Path(self._temp_dir.name, "database.sqlite")
-        database_url = "sqlite:///" + str(database_path)
+        database_url = f"sqlite:///{str(database_path)}"
         create_new_spine_database(database_url)
         gams_path = ""
         executable = ExecutableItem("name", {}, [], gams_path, True, 'merge', self._temp_dir.name, mock.MagicMock())

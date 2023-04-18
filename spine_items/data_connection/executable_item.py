@@ -35,11 +35,9 @@ class ExecutableItem(ExecutableItemBase):
             logger (LoggerInterface): a logger
         """
         super().__init__(name, project_dir, logger)
-        data_files = list()
+        data_files = []
         with os.scandir(self._data_dir) as scan_iterator:
-            for entry in scan_iterator:
-                if entry.is_file():
-                    data_files.append(entry.path)
+            data_files.extend(entry.path for entry in scan_iterator if entry.is_file())
         self._file_paths = file_references + data_files
         self._urls = db_references
         self._url_credentials = db_credentials

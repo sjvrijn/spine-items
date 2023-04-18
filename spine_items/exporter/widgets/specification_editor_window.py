@@ -713,6 +713,14 @@ class SpecificationEditorWindow(SpecificationEditorWindowBase):
                 mapping_type = MappingType.object_parameter_values
             else:
                 mapping_type = MappingType.object_parameter_default_values
+        elif type_label == "Object group":
+            mapping_type = MappingType.object_groups
+        elif type_label == "Relationship class with object parameter":
+            mapping_type = (
+                MappingType.relationship_object_parameter_default_values
+                if parameter_type_label == "Default value"
+                else MappingType.relationship_object_parameter_values
+            )
         elif type_label == "Relationship class":
             if parameter_type_label == "None":
                 mapping_type = MappingType.relationships
@@ -720,13 +728,6 @@ class SpecificationEditorWindow(SpecificationEditorWindowBase):
                 mapping_type = MappingType.relationship_parameter_values
             else:
                 mapping_type = MappingType.relationship_parameter_default_values
-        elif type_label == "Relationship class with object parameter":
-            if parameter_type_label == "Default value":
-                mapping_type = MappingType.relationship_object_parameter_default_values
-            else:
-                mapping_type = MappingType.relationship_object_parameter_values
-        elif type_label == "Object group":
-            mapping_type = MappingType.object_groups
         else:
             mapping_type = {
                 "Alternative": MappingType.alternatives,

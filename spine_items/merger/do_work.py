@@ -67,7 +67,7 @@ def do_work(process, cancel_on_error, logs_dir, from_server_urls, to_server_urls
     if all_errors:
         # Log errors in a time stamped file into the logs directory
         timestamp = create_log_file_timestamp()
-        logfilepath = os.path.abspath(os.path.join(logs_dir, timestamp + "_error.log"))
+        logfilepath = os.path.abspath(os.path.join(logs_dir, f"{timestamp}_error.log"))
         with open(logfilepath, "w") as f:
             for err in all_errors:
                 f.write("{0}\n".format(err))

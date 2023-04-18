@@ -61,7 +61,11 @@ class TestExecutableItemWithToolbox(unittest.TestCase):
         )
         project.add_item(exporter)
         exporter.upstream_resources_updated(
-            [database_resource("My data store", "sqlite:/// " + database_path, "in label")]
+            [
+                database_resource(
+                    "My data store", f"sqlite:/// {database_path}", "in label"
+                )
+            ]
         )
         item_dict = exporter.item_dict()
         logger = mock.MagicMock()

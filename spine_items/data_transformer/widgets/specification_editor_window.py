@@ -60,8 +60,8 @@ class SpecificationEditorWindow(SpecificationEditorWindowBase):
         ]
         for dock in self._changing_docks:
             dock.hide()
-        self._urls = dict()
-        self._filter_sub_interfaces = dict()
+        self._urls = {}
+        self._filter_sub_interfaces = {}
         self._current_filter_name = None
         self.takeCentralWidget().deleteLater()
         self._ui.filter_combo_box.addItems(_FILTER_NAMES)
@@ -92,12 +92,11 @@ class SpecificationEditorWindow(SpecificationEditorWindowBase):
     def _make_new_specification(self, spec_name):
         """See base class."""
         description = self._spec_toolbar.description()
-        filter_name = self._ui.filter_combo_box.currentText()
-        if not filter_name:
-            filter_settings = None
-        else:
+        if filter_name := self._ui.filter_combo_box.currentText():
             interface = self._filter_sub_interfaces[filter_name]
             filter_settings = interface.settings()
+        else:
+            filter_settings = None
         return DataTransformerSpecification(spec_name, filter_settings, description)
 
     @Slot(str)
@@ -142,7 +141,7 @@ class SpecificationEditorWindow(SpecificationEditorWindowBase):
         path = self._browse_database()
         if not path:
             return
-        url = "sqlite:///" + path
+        url = f"sqlite:///{path}"
         self._ui.database_url_combo_box.addItem(url)
         self._urls[url] = url
 

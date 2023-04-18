@@ -34,31 +34,33 @@ def scan_for_resources(provider, file_paths, urls, url_credentials, project_dir)
     Returns:
         list of ProjectItemResource: output resources
     """
-    resources = list()
+    resources = []
     for fp in file_paths:
         try:
             if path_in_dir(fp, provider.data_dir):
                 resource = file_resource(
-                    provider.name, fp, label=f"<{provider.name}>/" + Path(fp).relative_to(provider.data_dir).as_posix()
+                    provider.name,
+                    fp,
+                    label=f"<{provider.name}>/{Path(fp).relative_to(provider.data_dir).as_posix()}",
                 )
             elif path_in_dir(fp, project_dir):
                 path = Path(fp)
-                label = "<project>/" + Path(fp).relative_to(project_dir).as_posix()
-                if path.exists():
-                    resource = file_resource(provider.name, fp, label=label)
-                else:
-                    resource = transient_file_resource(provider.name, label)
+                label = f"<project>/{Path(fp).relative_to(project_dir).as_posix()}"
+                resource = (
+                    file_resource(provider.name, fp, label=label)
+                    if path.exists()
+                    else transient_file_resource(provider.name, label)
+                )
+            elif Path(fp).exists():
+                resource = file_resource(provider.name, fp)
             else:
-                if Path(fp).exists():
-                    resource = file_resource(provider.name, fp)
-                else:
-                    resource = transient_file_resource(provider.name, fp)
+                resource = transient_file_resource(provider.name, fp)
         except PermissionError:
             continue
         resources.append(resource)
     for url in urls:
         credentials = url_credentials.get(url)
         full_url = unsplit_url_credentials(url, credentials) if credentials is not None else url
-        resource = url_resource(provider.name, full_url, f"<{provider.name}>" + url)
+        resource = url_resource(provider.name, full_url, f"<{provider.name}>{url}")
         resources.append(resource)
     return resources

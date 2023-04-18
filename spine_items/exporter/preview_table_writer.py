@@ -22,14 +22,14 @@ class TableWriter(Writer):
     """An export writer that writes to a Python dictionary."""
 
     def __init__(self):
-        self._tables = dict()
+        self._tables = {}
         self._current_table = None
 
     def finish_table(self):
         self._current_table = None
 
     def start_table(self, table_name, title_key):
-        self._current_table = self._tables.setdefault(table_name, list())
+        self._current_table = self._tables.setdefault(table_name, [])
         return True
 
     @property
@@ -53,6 +53,4 @@ def _sanitize(x):
     """
     if isinstance(x, numpy.float_):
         return float(x)
-    if not isinstance(x, (float, str, int)) and x is not None:
-        return str(x)
-    return x
+    return str(x) if not isinstance(x, (float, str, int)) and x is not None else x

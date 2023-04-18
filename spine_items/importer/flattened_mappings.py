@@ -327,18 +327,12 @@ class FlattenedMappings:
             return "Pivoted"
         component = self._components[self._display_to_logical[row]]
         if component.position == Position.hidden:
-            if component.value is None:
-                return "None"
-            return "Constant"
+            return "None" if component.value is None else "Constant"
         if component.position == Position.header:
-            if component.value is None:
-                return "Headers"
-            return "Column Header"
+            return "Headers" if component.value is None else "Column Header"
         if component.position == Position.table_name:
             return "Table Name"
-        if component.position >= 0:
-            return "Column"
-        return "Row"
+        return "Column" if component.position >= 0 else "Row"
 
     def set_display_position_type(self, row, position_type):
         """Sets component's position 'type'.
@@ -384,23 +378,24 @@ class FlattenedMappings:
         if self._components[0].is_pivoted() and row == len(self._display_names) - 1:
             # 1. Pivoted data
             return "Pivoted values"
-        if self._display_names[row].endswith("values"):
-            if component.position == Position.hidden and component.value is not None:
-                # 2. Constant value: we want special database value support
-                try:
-                    value = from_database(*split_value_and_type(component.value))
-                    return SpineDBManager.display_data_from_parsed(value)
-                except ParameterValueFormatError:
-                    return None
-        # B) Handle all other cases cases
+        if (
+            self._display_names[row].endswith("values")
+            and component.position == Position.hidden
+            and component.value is not None
+        ):
+            # 2. Constant value: we want special database value support
+            try:
+                value = from_database(*split_value_and_type(component.value))
+                return SpineDBManager.display_data_from_parsed(value)
+            except ParameterValueFormatError:
+                return None
         if component.position == Position.hidden:
             if self._display_names[row].endswith("flags") and not isinstance(component.value, bool):
                 return bool(strtobool(component.value))
-            return component.value
+            else:
+                return component.value
         if component.position == Position.header:
-            if component.value is None:
-                return "Headers"
-            return component.value + 1
+            return "Headers" if component.value is None else component.value + 1
         if component.position == Position.table_name:
             return "<table name>"
         if component.position >= 0:
@@ -439,7 +434,7 @@ class FlattenedMappings:
             self._row_issues = {}
             for issue in check_validity(self._components[0]):
                 self._row_issues.setdefault(issue.rank, []).append(issue.msg)
-        return self._row_issues.get(self._display_to_logical[row], list())
+        return self._row_issues.get(self._display_to_logical[row], [])
 
     def _component_name_from_type(self, component_type):
         """Computes display name for a mapping component.
@@ -576,7 +571,10 @@ class FlattenedMappings:
         Returns:
             bool: True if mappings can import objects, False otherwise
         """
-        return self._map_type == MappingType.RelationshipClass or self._map_type == MappingType.ObjectGroup
+        return self._map_type in [
+            MappingType.RelationshipClass,
+            MappingType.ObjectGroup,
+        ]
 
     def _import_objects_mappings(self):
         """Collects a list of mapping components that have an import_objects attribute.

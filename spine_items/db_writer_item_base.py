@@ -36,8 +36,7 @@ class DBWriterItemBase(ProjectItem):
         committed_db_maps = set()
         for successor in self.successor_data_stores():
             url = successor.sql_alchemy_url()
-            db_map = self._toolbox.db_mngr.db_map(url)
-            if db_map:
+            if db_map := self._toolbox.db_mngr.db_map(url):
                 committed_db_maps.add(db_map)
         if committed_db_maps:
             self._toolbox.db_mngr.notify_session_committed(self, *committed_db_maps)
@@ -48,13 +47,12 @@ class DBWriterItemBase(ProjectItem):
         descendants = set(self._project.descendant_names(self.name))
         for connection in self._project.outgoing_connections(self.name):
             sibling_connections = set(self._project.incoming_connections(connection.destination)) - {connection}
-            conflicting.update(
-                {
-                    c.source: c.destination
-                    for c in sibling_connections
-                    if c.write_index < connection.write_index and c.source in descendants
-                }
-            )
+            conflicting |= {
+                c.source: c.destination
+                for c in sibling_connections
+                if c.write_index < connection.write_index
+                and c.source in descendants
+            }
         for name, dest in conflicting.items():
             self.add_notification(
                 f"This item is a dependency to {name} but it needs to wait for it to write to {dest}."

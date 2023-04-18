@@ -63,11 +63,11 @@ class DataConnection(ProjectItem):
         """
         super().__init__(name, description, x, y, project)
         if file_references is None:
-            file_references = list()
+            file_references = []
         if db_references is None:
-            db_references = list()
+            db_references = []
         if db_credentials is None:
-            db_credentials = dict()
+            db_credentials = {}
         self._toolbox = toolbox
         self.reference_model = QStandardItemModel()  # References
         self.data_model = QStandardItemModel()  # Paths of project internal files. These are found in DC data directory
@@ -185,10 +185,10 @@ class DataConnection(ProjectItem):
     def show_add_file_references_dialog(self, _=False):
         """Opens a file browser where user can select files to be added as references for this Data Connection."""
         answer = QFileDialog.getOpenFileNames(self._toolbox, "Add file references", self._project.project_dir, "*.*")
-        file_paths = answer[0]
-        if not file_paths:  # Cancel button clicked
+        if file_paths := answer[0]:
+            self._add_file_references(file_paths)
+        else:
             return
-        self._add_file_references(file_paths)
 
     @Slot(list)
     def _add_file_references(self, paths):
@@ -207,8 +207,7 @@ class DataConnection(ProjectItem):
                 repeated_paths.append(path)
             else:
                 new_paths.append(path)
-        repeated_paths = ", ".join(repeated_paths)
-        if repeated_paths:
+        if repeated_paths := ", ".join(repeated_paths):
             self._logger.msg_warning.emit(f"Reference to file(s) <b>{repeated_paths}</b> already exists")
         if new_paths:
             self._toolbox.undo_stack.push(AddDCReferencesCommand(self, new_paths, []))
@@ -353,8 +352,9 @@ class DataConnection(ProjectItem):
         Args:
             path (str): file path
         """
-        resources_changed = self._try_to_mark_file_reference_missing(path) or self._remove_data_file(path)
-        if resources_changed:
+        if resources_changed := self._try_to_mark_file_reference_missing(
+            path
+        ) or self._remove_data_file(path):
             self._check_notifications()
             self._resources_to_successors_changed()
 
@@ -435,7 +435,7 @@ class DataConnection(ProjectItem):
                 item.setData(path, Qt.ItemDataRole.DisplayRole)
             if not fixed_references:
                 return
-            self.file_system_watcher.add_persistent_file_paths(ref for ref in fixed_references)
+            self.file_system_watcher.add_persistent_file_paths(iter(fixed_references))
             self._check_notifications()
             self._resources_to_successors_changed()
 
@@ -492,7 +492,7 @@ class DataConnection(ProjectItem):
                 item.setData(path, Qt.ItemDataRole.DisplayRole)
         if not fixed_references:
             return
-        self.file_system_watcher.add_persistent_file_paths(ref for ref in fixed_references)
+        self.file_system_watcher.add_persistent_file_paths(iter(fixed_references))
         self._check_notifications()
         self._resources_to_successors_changed()
 
@@ -508,7 +508,7 @@ class DataConnection(ProjectItem):
         if parent_item is not self._file_ref_root:
             return
         reference = self.file_references[index.row()]
-        url = "file:///" + reference
+        url = f"file:///{reference}"
         res = open_url(url)
         if not res:
             self._logger.msg_error.emit(f"Failed to open reference:<b>{reference}</b>")
@@ -522,7 +522,7 @@ class DataConnection(ProjectItem):
             logging.error("Index not valid")
             return
         data_file = index.data(_DATA_FILE_PATH_ROLE)
-        url = "file:///" + data_file
+        url = f"file:///{data_file}"
         # noinspection PyTypeChecker, PyCallByClass, PyArgumentList
         res = open_url(url)
         if not res:
@@ -654,10 +654,13 @@ class DataConnection(ProjectItem):
     def resources_for_direct_successors(self):
         """see base class"""
         data_files = [os.path.join(self.data_dir, f) for f in self.data_files()]
-        resources = scan_for_resources(
-            self, self.file_references + data_files, self.db_references, self.db_credentials, self._project.project_dir
+        return scan_for_resources(
+            self,
+            self.file_references + data_files,
+            self.db_references,
+            self.db_credentials,
+            self._project.project_dir,
         )
-        return resources
 
     def _check_notifications(self):
         """Sets or clears the exclamation mark icon."""
@@ -667,8 +670,9 @@ class DataConnection(ProjectItem):
                 "This Data Connection does not have any references or data. "
                 "Add some in the Data Connection Properties panel."
             )
-        missing_file_references = [ref for ref in self.file_references if not os.path.exists(ref)]
-        if missing_file_references:
+        if missing_file_references := [
+            ref for ref in self.file_references if not os.path.exists(ref)
+        ]:
             self.add_notification("Cannot find some file references. Please, check that the files exist.")
 
     def item_dict(self):
@@ -688,10 +692,12 @@ class DataConnection(ProjectItem):
     def from_dict(name, item_dict, toolbox, project):
         description, x, y = ProjectItem.parse_item_dict(item_dict)
         # FIXME: Do we want to convert references to file_references via upgrade?
-        file_references = item_dict.get("file_references", list()) or item_dict.get("references", list())
+        file_references = item_dict.get("file_references", []) or item_dict.get(
+            "references", []
+        )
         file_references = [deserialize_path(r, project.project_dir) for r in file_references]
-        db_references = item_dict.get("db_references", list())
-        db_credentials = item_dict.get("db_credentials", dict())
+        db_references = item_dict.get("db_references", [])
+        db_credentials = item_dict.get("db_credentials", {})
         return DataConnection(name, description, x, y, toolbox, project, file_references, db_references, db_credentials)
 
     def rename(self, new_name, rename_data_dir_message):

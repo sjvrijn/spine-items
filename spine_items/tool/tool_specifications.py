@@ -125,14 +125,13 @@ class ToolSpecification(ProjectItemSpecification):
         self.tooltype = tooltype
         self.path = path
         self.includes = includes
-        if cmdline_args is not None:
-            if isinstance(cmdline_args, str):
-                # Old tool spec files may have the command line arguments as plain strings.
-                self.cmdline_args = split_cmdline_args(cmdline_args)
-            else:
-                self.cmdline_args = cmdline_args
-        else:
+        if cmdline_args is None:
             self.cmdline_args = []
+        elif isinstance(cmdline_args, str):
+            # Old tool spec files may have the command line arguments as plain strings.
+            self.cmdline_args = split_cmdline_args(cmdline_args)
+        else:
+            self.cmdline_args = cmdline_args
         self.inputfiles = set(inputfiles) if inputfiles else set()
         self.inputfiles_opt = set(inputfiles_opt) if inputfiles_opt else set()
         self.outputfiles = set(outputfiles) if outputfiles else set()
@@ -173,9 +172,8 @@ class ToolSpecification(ProjectItemSpecification):
             if k in LIST_REQUIRED_KEYS:
                 if set(self.__dict__[k]) != set(v):
                     return False
-            else:
-                if self.__dict__[k] != v:
-                    return False
+            elif self.__dict__[k] != v:
+                return False
         return True
 
     def set_return_code(self, code, description):
@@ -199,7 +197,7 @@ class ToolSpecification(ProjectItemSpecification):
         Returns:
             dict: definition or None if there was a problem in the tool definition.
         """
-        kwargs = dict()
+        kwargs = {}
         for p in REQUIRED_KEYS + OPTIONAL_KEYS:
             try:
                 kwargs[p] = data[p]
@@ -277,7 +275,7 @@ class GAMSTool(ToolSpecification):
         )
         main_file = includes[0]
         # Add .lst file to list of output files
-        self.lst_file = os.path.splitext(main_file)[0] + ".lst"
+        self.lst_file = f"{os.path.splitext(main_file)[0]}.lst"
         self.outputfiles.add(self.lst_file)
         self.main_prgm = main_file
         self.gams_options = OrderedDict()
@@ -321,19 +319,14 @@ class GAMSTool(ToolSpecification):
         Returns:
             Anchor to gamside project anchor or None if operation failed
         """
-        prj_file_path = os.path.abspath(os.path.join(self.path, self.short_name + "_autocreated.gpr"))
+        prj_file_path = os.path.abspath(
+            os.path.join(self.path, f"{self.short_name}_autocreated.gpr")
+        )
         try:
             self.make_gamside_project_file(prj_file_path, basedir)
         except OSError:
             return None
-        anchor = (
-            "<a style='color:#99CCFF;' title='"
-            + prj_file_path
-            + "' href='file:///"
-            + prj_file_path
-            + "'>Click here to debug in GAMSIDE</a>"
-        )
-        return anchor
+        return f"<a style='color:#99CCFF;' title='{prj_file_path}' href='file:///{prj_file_path}'>Click here to debug in GAMSIDE</a>"
 
     def make_gamside_project_file(self, prj_file_path, basedir):
         """Make a GAMSIDE project file for debugging.
@@ -351,11 +344,11 @@ class GAMSTool(ToolSpecification):
             with open(prj_file_path, "w") as f:
                 f.write("[PROJECT]\n\n")
                 f.write("[MRUFILES]\n")  # Most Recently Used (MRU)
-                f.write("1=" + lst_file_path + "\n\n")
+                f.write(f"1={lst_file_path}" + "\n\n")
                 f.write("[OPENWINDOW_1]\n")
-                f.write("FILE0=" + main_prgm_path + "\n")
-                f.write("FILE1=" + lst_file_path + "\n")
-                f.write("FILE2=" + main_prgm_path + "\n")
+                f.write(f"FILE0={main_prgm_path}" + "\n")
+                f.write(f"FILE1={lst_file_path}" + "\n")
+                f.write(f"FILE2={main_prgm_path}" + "\n")
                 f.write("MAXIM=0\n")
                 f.write("TOP=0\n")
                 f.write("LEFT=0\n")
@@ -531,9 +524,12 @@ class PythonTool(ToolSpecification):
             # Use global (default) execution settings from Settings->Tools
             # This part is for providing support for Python Tool specs that do not have
             # the execution_settings dict yet
-            d = dict()
-            d["kernel_spec_name"] = self._settings.value("appSettings/pythonKernel", defaultValue="")
-            d["env"] = ""
+            d = {
+                "kernel_spec_name": self._settings.value(
+                    "appSettings/pythonKernel", defaultValue=""
+                ),
+                "env": "",
+            }
             d["use_jupyter_console"] = bool(
                 int(self._settings.value("appSettings/usePythonKernel", defaultValue="0"))
             )  # bool(int(str))
@@ -649,9 +645,7 @@ class ExecutableTool(ToolSpecification):
         return d
 
     def _includes_main_path_relative(self):
-        if not self.path:
-            return None
-        return super()._includes_main_path_relative()
+        return super()._includes_main_path_relative() if self.path else None
 
     def set_execution_settings(self):
         """Updates old Executable Tool specifications by adding the
@@ -661,9 +655,7 @@ class ExecutableTool(ToolSpecification):
             void
         """
         if not self.execution_settings:
-            d = dict()
-            d["cmd"] = ""
-            d["shell"] = ""
+            d = {"cmd": "", "shell": ""}
             self.execution_settings = d
         else:
             # Make sure that required keys are included (for debugging)

@@ -32,7 +32,7 @@ class ExecutableItem(ExecutableItemBase):
             logger (LoggerInterface): a logger
         """
         super().__init__(name, project_dir, logger)
-        self._db_resources = list()
+        self._db_resources = []
         self._specification = specification
         self._filter_config_path = filter_config_path(self._data_dir)
 
@@ -48,8 +48,7 @@ class ExecutableItem(ExecutableItemBase):
     def ready_to_execute(self, settings):
         if self._specification is None:
             return True
-        messages = self._specification.settings.report_inconsistencies()
-        if messages:
+        if messages := self._specification.settings.report_inconsistencies():
             for message in messages:
                 self._logger.msg_error.emit(message)
             return False

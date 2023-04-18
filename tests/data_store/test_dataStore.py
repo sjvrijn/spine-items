@@ -95,7 +95,7 @@ class TestDataStoreWithMockToolbox(unittest.TestCase):
     def create_temp_db(self):
         """Let's create a real db to more easily test complicated stuff (such as opening a tree view)."""
         temp_db_path = os.path.join(self.ds.data_dir, "temp_db.sqlite")
-        sqlite_url = "sqlite:///" + temp_db_path
+        sqlite_url = f"sqlite:///{temp_db_path}"
         create_new_spine_database(sqlite_url)
         return temp_db_path
 
@@ -343,12 +343,18 @@ class TestDataStoreWithMockToolbox(unittest.TestCase):
             QApplication.processEvents()
         expected_old_resources = [
             database_resource(
-                self.ds.name, "sqlite:///" + database_1, label=database_label(self.ds.name), filterable=True
+                self.ds.name,
+                f"sqlite:///{database_1}",
+                label=database_label(self.ds.name),
+                filterable=True,
             )
         ]
         expected_new_resources = [
             database_resource(
-                self.ds.name, "sqlite:///" + database_2, label=database_label(self.ds.name), filterable=True
+                self.ds.name,
+                f"sqlite:///{database_2}",
+                label=database_label(self.ds.name),
+                filterable=True,
             )
         ]
         self.project.notify_resource_replacement_to_predecessors.assert_called_once_with(

@@ -51,7 +51,7 @@ def do_work(process, mapping, cancel_on_error, on_conflict, logs_dir, sources, c
     to_clients = [SpineDBClient.from_server_url(server_url) for server_url in to_server_urls]
     for src in sources:
         file_anchor = f"<a style='color:#BB99FF;' title='{src}' href='file:///{src}'>{os.path.basename(src)}</a>"
-        logger.msg.emit("Importing " + file_anchor)
+        logger.msg.emit(f"Importing {file_anchor}")
         try:
             connector.connect_to_source(src)
         except Exception as error:  # pylint: disable=broad-except
@@ -102,14 +102,14 @@ def do_work(process, mapping, cancel_on_error, on_conflict, logs_dir, sources, c
     if all_errors:
         # Log errors in a time stamped file into the logs directory
         timestamp = create_log_file_timestamp()
-        logfilepath = os.path.abspath(os.path.join(logs_dir, timestamp + "_read_error.log"))
+        logfilepath = os.path.abspath(
+            os.path.join(logs_dir, f"{timestamp}_read_error.log")
+        )
         with open(logfilepath, "w") as f:
             for err in all_errors:
                 f.write(f"{err}\n")
         # Make error log file anchor with path as tooltip
-        logfile_anchor = (
-            "<a style='color:#BB99FF;' title='" + logfilepath + "' href='file:///" + logfilepath + "'>Error log</a>"
-        )
+        logfile_anchor = f"<a style='color:#BB99FF;' title='{logfilepath}' href='file:///{logfilepath}'>Error log</a>"
         logger.msg_error.emit(logfile_anchor)
         if cancel_on_error:
             logger.msg_error.emit("Cancel import on error has been set. Bailing out.")
@@ -149,14 +149,14 @@ def _import_data_to_url(cancel_on_error, on_conflict, logs_dir, all_data, client
     if all_import_errors:
         # Log errors in a time stamped file into the logs directory
         timestamp = create_log_file_timestamp()
-        logfilepath = os.path.abspath(os.path.join(logs_dir, timestamp + "_import_error.log"))
+        logfilepath = os.path.abspath(
+            os.path.join(logs_dir, f"{timestamp}_import_error.log")
+        )
         with open(logfilepath, "w") as f:
             for err in all_import_errors:
                 f.write(str(err) + "\n")
         # Make error log file anchor with path as tooltip
-        logfile_anchor = (
-            "<a style='color:#BB99FF;' title='" + logfilepath + "' href='file:///" + logfilepath + "'>Error log</a>"
-        )
+        logfile_anchor = f"<a style='color:#BB99FF;' title='{logfilepath}' href='file:///{logfilepath}'>Error log</a>"
         logger.msg_error.emit(logfile_anchor)
         return False
     return True

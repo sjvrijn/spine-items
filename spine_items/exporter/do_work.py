@@ -64,8 +64,8 @@ def do_work(
         tuple: boolean success flag, dictionary of output files
     """
     specification = Specification.from_dict(specification)
-    successes = list()
-    written_files = dict()
+    successes = []
+    written_files = {}
     for url, output_label in databases.items():
         try:
             database_map = DatabaseMapping(url)
@@ -156,15 +156,13 @@ def _export_to_file(
             return False
         successes.append(False)
     else:
-        if isinstance(writer, CsvWriter):
-            files = writer.output_files()
-        else:
-            files = {out_path}
+        files = writer.output_files() if isinstance(writer, CsvWriter) else {out_path}
         written_files[output_label] = files
         if len(files) > 1:
-            anchors = list()
-            for path in (Path(f) for f in files):
-                anchors.append(f"\t<a style='color:#BB99FF;' title='{path}' href='file:///{path}'>{path.name}</a>")
+            anchors = [
+                f"\t<a style='color:#BB99FF;' title='{path}' href='file:///{path}'>{path.name}</a>"
+                for path in (Path(f) for f in files)
+            ]
             logger.msg_success.emit(f"Wrote multiple files:<br>{'<br>'.join(anchors)}")
         else:
             only_file = Path(next(iter(files)))
@@ -208,7 +206,7 @@ def _export_to_database(database_map, specification, out_url, successes, cancel_
             return False
         successes.append(False)
     else:
-        logger.msg_success.emit(f"Wrote to database.")
+        logger.msg_success.emit("Wrote to database.")
         successes.append(True)
     return True
 
@@ -248,7 +246,7 @@ def _add_extension(label, file_format):
     name, _, label_extension = label.rpartition(".")
     if name and file_format.is_compatible_file_extension(label_extension):
         return label
-    return label + "." + file_format.file_extension()
+    return f"{label}.{file_format.file_extension()}"
 
 
 def _subdirectory_for_fork(output_file_name, data_dir, output_time_stamps, filter_id_hash):
@@ -271,7 +269,9 @@ def _subdirectory_for_fork(output_file_name, data_dir, output_time_stamps, filte
         time_stamp = ""
     if filter_id_hash:
         if time_stamp:
-            path = os.path.join(data_dir, filter_id_hash + "_" + time_stamp, output_file_name)
+            path = os.path.join(
+                data_dir, f"{filter_id_hash}_{time_stamp}", output_file_name
+            )
         else:
             path = os.path.join(data_dir, filter_id_hash, output_file_name)
     else:

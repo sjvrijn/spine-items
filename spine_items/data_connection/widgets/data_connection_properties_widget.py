@@ -62,7 +62,7 @@ class DataConnectionPropertiesWidget(PropertiesWidgetBase):
         if option == "Open containing directory...":
             ref_path = self.ui.treeView_dc_references.model().itemFromIndex(index).data(Qt.ItemDataRole.DisplayRole)
             ref_dir = os.path.split(ref_path)[0]
-            file_url = "file:///" + ref_dir
+            file_url = f"file:///{ref_dir}"
             self._toolbox.open_anchor(QUrl(file_url, QUrl.TolerantMode))
         elif option == "Open...":
             dc.open_reference(index)

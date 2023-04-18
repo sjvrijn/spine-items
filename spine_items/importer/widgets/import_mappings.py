@@ -153,7 +153,7 @@ class ImportMappings:
             self._ui.mapping_spec_table.setRootIndex(self._mappings_model.dummy_parent())
             return
         self._ui.mapping_spec_table.setRootIndex(current)
-        for column in range(0, self._mappings_model.columnCount(current) - 1):
+        for column in range(self._mappings_model.columnCount(current) - 1):
             self._ui.mapping_spec_table.resizeColumnToContents(column)
 
     @Slot()
@@ -179,7 +179,7 @@ class ImportMappings:
             list_selection = QItemSelection(top_left, bottom_right)
             if list_selection.contains(list_index):
                 if Role.FLATTENED_MAPPINGS in roles:
-                    for column in range(0, self._mappings_model.columnCount(list_index) - 1):
+                    for column in range(self._mappings_model.columnCount(list_index) - 1):
                         self._ui.mapping_spec_table.resizeColumnToContents(column)
                 return
             table_index = top_left.parent()
@@ -268,7 +268,7 @@ class ImportMappings:
         selection_model = self._ui.mapping_list.selectionModel()
         if not selection_model.hasSelection():
             return
-        mapping_dicts = list()
+        mapping_dicts = []
         for index in selection_model.selectedIndexes():
             name = index.data()
             flattened_mappings = index.data(Role.FLATTENED_MAPPINGS)

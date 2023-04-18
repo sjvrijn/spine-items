@@ -133,7 +133,6 @@ class CheckableFileListModel(FileListModel):
                         pack_index = self.index(pack_row, 0)
                         index = self.index(row, 0, pack_index)
                         self.dataChanged.emit(index, index, [Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.ToolTipRole])
-                        return
                     else:
                         single_resources = [item.resource for item in self._single_resources]
                         new_pack_resources = [
@@ -144,7 +143,8 @@ class CheckableFileListModel(FileListModel):
                         ]
                         new_pack_resources.append(new_resource)
                         self.update(single_resources + new_pack_resources)
-                        return
+
+                    return
 
     def setData(self, index, value, role=Qt.ItemDataRole.EditRole):
         """Sets data in the model."""
@@ -206,7 +206,7 @@ class ToolCommandLineArgsModel(CommandLineArgsModel):
 
     def reset_model(self, spec_args, tool_args):
         self._args = tool_args
-        self._reset_root(self._spec_args_root, spec_args, dict(), has_empty_row=False)
+        self._reset_root(self._spec_args_root, spec_args, {}, has_empty_row=False)
         self._reset_root(
             self._tool_args_root, tool_args, dict(editable=True, selectable=True, drag_enabled=True), has_empty_row=True
         )

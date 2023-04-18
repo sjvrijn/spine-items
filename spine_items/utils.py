@@ -33,7 +33,7 @@ def database_label(provider_name):
     Returns:
         str: resource label
     """
-    return "db_url@" + provider_name
+    return f"db_url@{provider_name}"
 
 
 def convert_to_sqlalchemy_url(urllib_url, item_name="", logger=None):
@@ -51,8 +51,7 @@ def convert_to_sqlalchemy_url(urllib_url, item_name="", logger=None):
             logger.msg_error.emit(f"Unable to generate URL from {selections}: invalid dialect {dialect}.")
             return None
         if dialect == "sqlite":
-            database = url.get("database", "")
-            if database:
+            if database := url.get("database", ""):
                 url["database"] = os.path.abspath(database)
             sa_url = URL("sqlite", **url)  # pylint: disable=unexpected-keyword-arg
         else:
@@ -154,7 +153,7 @@ def generate_filter_subdirectory_name(resources, filter_id_hash):
     if subdirectory:
         scenario_name = _single_scenario_name_or_none(resources)
         if scenario_name is not None:
-            subdirectory = scenario_name[:15] + "_" + subdirectory
+            subdirectory = f"{scenario_name[:15]}_{subdirectory}"
     return subdirectory
 
 

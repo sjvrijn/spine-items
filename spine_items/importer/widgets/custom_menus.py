@@ -34,13 +34,11 @@ class FilesContextMenu(CustomContextMenu):
             index (QModelIndex): Index of item that requested the context-menu
         """
         super().__init__(parent, position)
-        if not index.isValid():
-            self.add_action("Open directory...")
-        else:
+        if index.isValid():
             self.add_action("Open import editor")
             self.add_action("Select connector type")
             self.addSeparator()
-            self.add_action("Open directory...")
+        self.add_action("Open directory...")
 
 
 class SpecificationMenu(ItemSpecificationMenu):

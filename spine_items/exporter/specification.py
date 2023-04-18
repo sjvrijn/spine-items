@@ -180,7 +180,7 @@ class Specification(ProjectItemSpecification):
         """
         super().__init__(name, description, ItemInfo.item_type(), ItemInfo.item_category())
         if mapping_specifications is None:
-            mapping_specifications = dict()
+            mapping_specifications = {}
         self._mapping_specifications = mapping_specifications
         self.output_format = output_format
 
@@ -246,14 +246,18 @@ class Specification(ProjectItemSpecification):
         Returns:
             bool: True if multiple files will be exporter, False otherwise
         """
-        if not self.output_format.is_multi_file_capable():
-            return False
-        for mapping_spec in self._mapping_specifications.values():
-            if mapping_spec.use_fixed_table_name_flag or any(
-                m.position == Position.table_name for m in mapping_spec.root.flatten()
-            ):
-                return True
-        return False
+        return (
+            any(
+                mapping_spec.use_fixed_table_name_flag
+                or any(
+                    m.position == Position.table_name
+                    for m in mapping_spec.root.flatten()
+                )
+                for mapping_spec in self._mapping_specifications.values()
+            )
+            if self.output_format.is_multi_file_capable()
+            else False
+        )
 
     def to_dict(self):
         """
@@ -262,7 +266,7 @@ class Specification(ProjectItemSpecification):
         Returns:
             dict: serialized specification
         """
-        mappings = dict()
+        mappings = {}
         for name, mapping_spec in self._mapping_specifications.items():
             spec_dict = {
                 "type": mapping_spec.type.value,
@@ -337,7 +341,7 @@ def _add_index_names(mapping):
     if any((isinstance(m, (IndexNameMapping, DefaultValueIndexNameMapping)) for m in flattened)):
         return mapping
     if any((isinstance(m, (ParameterValueIndexMapping, ParameterDefaultValueIndexMapping)) for m in flattened)):
-        fixed = list()
+        fixed = []
         for m in flattened:
             if isinstance(m, ParameterValueIndexMapping):
                 fixed.append(IndexNameMapping(Position.hidden))

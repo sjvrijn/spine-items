@@ -204,9 +204,7 @@ class JuliaOptionsWidget(OptionsWidget):
         file_path, _ = QFileDialog.getSaveFileName(
             self, "Create Julia Sysimage file", suggested_file_path, f"Library (*.{ext})"
         )
-        if not file_path:
-            return None
-        return file_path
+        return file_path if file_path else None
 
     @Slot(bool)
     def _create_sysimage(self, _checked=False):
@@ -242,12 +240,13 @@ class JuliaOptionsWidget(OptionsWidget):
         spec = self._make_sysimage_spec(spec_names)
         item_dict = engine_data["items"][self._tool.name]
         item_dict["specification"] = spec.name
-        options = item_dict.get("options")
-        if options:
+        if options := item_dict.get("options"):
             options["julia_sysimage"] = ""  # Don't use any previous sysimages
         spec_dict = spec.to_dict()
         spec_dict["definition_file_path"] = spec.definition_file_path
-        engine_data["specifications"].setdefault(self._tool.item_type(), list()).append(spec_dict)
+        engine_data["specifications"].setdefault(
+            self._tool.item_type(), []
+        ).append(spec_dict)
         self.sysimage_worker.set_engine_data(engine_data)
         self.sysimage_worker.finished.connect(lambda tool=self._tool: self._do_create_sysimage(tool))
         self._update_ui()

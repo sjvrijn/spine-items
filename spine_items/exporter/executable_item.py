@@ -55,7 +55,7 @@ class ExecutableItem(ExecutableItemBase):
         self._output_time_stamps = output_time_stamps
         self._cancel_on_error = cancel_on_error
         self._gams_path = gams_path
-        self._forks = dict()
+        self._forks = {}
         self._result_files = {}
         self._process = None
         self._specification = specification
@@ -81,11 +81,11 @@ class ExecutableItem(ExecutableItemBase):
             channel = next((channel for channel in self._output_channels if channel.in_label == resource.label), None)
             if channel is None:
                 channel = self._find_legacy_output_channel(resource)
-                if channel is None:
-                    self._logger.msg_warning.emit(
-                        f"<b>{self.name}</b>: No settings for database {resource.label}. Skipping."
-                    )
-                    continue
+            if channel is None:
+                self._logger.msg_warning.emit(
+                    f"<b>{self.name}</b>: No settings for database {resource.label}. Skipping."
+                )
+                continue
             if not channel.out_label:
                 self._logger.msg_warning.emit(
                     f"<b>{self.name}</b>: No output label given to database {resource.label}. Skipping."
@@ -124,8 +124,8 @@ class ExecutableItem(ExecutableItemBase):
             channel = next((channel for channel in self._output_channels if channel.in_label == resource.label), None)
             if channel is None:
                 channel = self._find_legacy_output_channel(resource)
-                if channel is None:
-                    continue
+            if channel is None:
+                continue
             if not channel.out_label:
                 continue
             out_urls[resource.url] = channel.out_url
@@ -182,7 +182,10 @@ class ExecutableItem(ExecutableItemBase):
             with open(Path(self._data_dir, file_name), "w") as manifest:
                 dump(
                     {
-                        label: list(str(Path(file).relative_to(Path(self._data_dir))) for file in files)
+                        label: [
+                            str(Path(file).relative_to(Path(self._data_dir)))
+                            for file in files
+                        ]
                         for label, files in self._result_files.items()
                     },
                     manifest,
@@ -204,7 +207,7 @@ class ExecutableItem(ExecutableItemBase):
 
     def _output_resources_forward(self):
         """See base class."""
-        resources = list()
+        resources = []
         for label, output_files in self._result_files.items():
             resources += [file_resource_in_pack(self.name, label, str(Path(self._data_dir, f))) for f in output_files]
         if self._specification is not None and self._specification.output_format == OutputFormat.SQL:

@@ -86,15 +86,13 @@ class ImporterExporterAnimation:
                 start = 270
                 # Invert sense if from the right
                 invert_sense = source.x() > center.x()
+            elif sink.x() < center.x():
+                # To the left: start at left and invert sense
+                start = 180
+                invert_sense = True
             else:
-                # From the bottom
-                if sink.x() < center.x():
-                    # To the left: start at left and invert sense
-                    start = 180
-                    invert_sense = True
-                else:
-                    # To the right: start at right
-                    start = 0
+                # To the right: start at right
+                start = 0
             if invert_sense:
                 sweep = -sweep
             middle_point = _point_at_angle(loop_rect, start)

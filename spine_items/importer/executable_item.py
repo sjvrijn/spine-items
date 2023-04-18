@@ -75,7 +75,7 @@ class ExecutableItem(DBWriterExecutableItemBase):
             self._logger.msg_warning.emit(f"<b>{self.name}</b>: No mappings configured. Skipping.")
             return ItemExecutionFinishState.SKIPPED
         labelled_sources = get_labelled_sources(forward_resources)
-        sources = list()
+        sources = []
         for label in self._selected_files:
             sources += labelled_sources.get(label, [])
         to_resources = [r for r in backward_resources if r.type_ == "database"]
@@ -131,7 +131,7 @@ class ExecutableItem(DBWriterExecutableItemBase):
             name, ItemInfo.item_type(), specification_name, specifications, logger
         )
         mapping = specification.mapping if specification else {}
-        file_selection = {label: selected for label, selected in item_dict.get("file_selection", list())}
+        file_selection = dict(item_dict.get("file_selection", []))
         selected_files = [filepath for filepath, selected in file_selection.items() if selected]
         gams_path = app_settings.value("appSettings/gamsPath", defaultValue=None)
         cancel_on_error = item_dict["cancel_on_error"]

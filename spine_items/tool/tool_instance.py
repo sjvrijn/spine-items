@@ -52,7 +52,7 @@ class ToolInstance:
         self._owner = owner
         self.exec_mngr = None
         self.program = None  # Program to start in the subprocess
-        self.args = list()  # List of command line arguments for the program
+        self.args = []
         self.killed = False
 
     def _update_killed(self):
@@ -244,8 +244,7 @@ class PythonToolInstance(ToolInstance):
             # Prepare command
             cd_command = f"%cd -q {self.basedir}"  # -q: quiet
             main_command = f'%run "{self.tool_specification.main_prgm}"'
-            cmdline_args = self.tool_specification.cmdline_args + args
-            if cmdline_args:
+            if cmdline_args := self.tool_specification.cmdline_args + args:
                 main_command += " " + '"' + '" "'.join(cmdline_args) + '"'
             self.args = [cd_command, main_command]
             conda_exe = self._settings.value("appSettings/condaPath", defaultValue="")
@@ -288,12 +287,9 @@ class PythonToolInstance(ToolInstance):
         Returns:
             list of str: lines of code
         """
-        globals_dict = 'globals_dict = globals()'
         update_globals_dict = f'globals_dict.update({{"__file__": "{full_fp}", "__name__": "__main__"}})'
-        compile_and_exec = (
-            f"with open('{fp}', 'rb') as f: exec(compile(f.read(), '{fp}', 'exec'), globals_dict, globals_dict)"
-            + os.linesep
-        )
+        compile_and_exec = f"with open('{fp}', 'rb') as f: exec(compile(f.read(), '{fp}', 'exec'), globals_dict, globals_dict){os.linesep}"
+        globals_dict = 'globals_dict = globals()'
         return [globals_dict, update_globals_dict, compile_and_exec]
 
     def execute(self):
@@ -317,22 +313,16 @@ class ExecutableToolInstance(ToolInstance):
         """See base class."""
         if not self.tool_specification.main_prgm:  # Run command
             cmd = self.tool_specification.execution_settings["cmd"].split()  # Convert str to list
-            shell = self.tool_specification.execution_settings["shell"]
-            if not shell:
+            if shell := self.tool_specification.execution_settings["shell"]:
+                # If shell is given, the shell will be set as self.program and the cmd list will be considered
+                # as cmd line args
+                self.program = "sh" if shell == "bash" else shell
+            else:
                 # If shell is not given (empty str), The first item in cmd list will be considered as self.program.
                 # The rest of the cmd list will be considered as cmd line args
                 self.program = cmd.pop(0)
-            else:
-                # If shell is given, the shell will be set as self.program and the cmd list will be considered
-                # as cmd line args
-                if shell == "bash":
-                    self.program = "sh"
-                else:
-                    self.program = shell
-            if self.program == "cmd.exe" or self.program == "cmd":
-                # If cmd.exe shell is not given the /C flag, it will just open cmd.exe in the Execution Log
-                if "/C" not in cmd:
-                    cmd = ["/C"] + cmd
+            if self.program in ["cmd.exe", "cmd"] and "/C" not in cmd:
+                cmd = ["/C"] + cmd
             # The final command line args list (self.args) consists of three (3) parts:
             # 1. The first part is the cmd list
             # 2. The second part is the Tool Specification cmd line args
@@ -340,15 +330,14 @@ class ExecutableToolInstance(ToolInstance):
             self.args = cmd + self.tool_specification.cmdline_args + args
         else:  # Run main program file
             main_program_file = os.path.join(self.basedir, self.tool_specification.main_prgm)
-            if os.path.isfile(main_program_file):
-                if sys.platform != "win32":
-                    self.program = "sh"
-                    self.args.append(main_program_file)
-                else:
-                    self.program = main_program_file
-                self.append_cmdline_args(args)
-            else:
+            if not os.path.isfile(main_program_file):
                 raise RuntimeError(f"main program file {main_program_file} does not exist.")
+            if sys.platform != "win32":
+                self.program = "sh"
+                self.args.append(main_program_file)
+            else:
+                self.program = main_program_file
+            self.append_cmdline_args(args)
         self.exec_mngr = ProcessExecutionManager(self._logger, self.program, *self.args, workdir=self.basedir)
 
     def execute(self):

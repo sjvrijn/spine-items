@@ -46,11 +46,23 @@ def scan_for_resources(provider, tool_specification, output_dir):
         return []
     last_output_files = find_last_output_files(tool_specification.outputfiles, output_dir)
     for out_file_label in tool_specification.outputfiles:
-        latest_files = last_output_files.get(out_file_label, list())
-        make_resource = file_resource if not is_pattern(out_file_label) else file_resource_in_pack
-        for out_file in latest_files:
-            resources.append(make_resource(provider.name, file_path=out_file, label=out_file_label))
+        latest_files = last_output_files.get(out_file_label, [])
+        make_resource = (
+            file_resource_in_pack
+            if is_pattern(out_file_label)
+            else file_resource
+        )
+        resources.extend(
+            make_resource(
+                provider.name, file_path=out_file, label=out_file_label
+            )
+            for out_file in latest_files
+        )
         if not latest_files:
-            make_resource = transient_file_resource if not is_pattern(out_file_label) else file_resource_in_pack
+            make_resource = (
+                file_resource_in_pack
+                if is_pattern(out_file_label)
+                else transient_file_resource
+            )
             resources.append(make_resource(provider.name, label=out_file_label))
     return resources

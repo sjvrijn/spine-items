@@ -171,9 +171,7 @@ class MappingsModel(QAbstractItemModel):
         parent_item = parent.internalPointer()
         if isinstance(parent_item, SourceTableItem):
             return 1
-        if isinstance(parent_item, MappingListItem):
-            return 4
-        return 0
+        return 4 if isinstance(parent_item, MappingListItem) else 0
 
     def data(self, index, role=Qt.ItemDataRole.DisplayRole):
         index_item = index.internalPointer()
@@ -200,7 +198,7 @@ class MappingsModel(QAbstractItemModel):
             list_item = self._mappings[row]
             if row == 0 or list_item.in_specification or list_item.empty:
                 return list_item.name
-            return list_item.name + " (new)"
+            return f"{list_item.name} (new)"
         if role == Qt.ItemDataRole.EditRole:
             return self._mappings[index.row()].name
         if role == Qt.ItemDataRole.CheckStateRole:
@@ -222,9 +220,7 @@ class MappingsModel(QAbstractItemModel):
             return None
         if role == Qt.ItemDataRole.FontRole:
             return self._add_table_row_font if self._mappings[index.row()].empty else None
-        if role == Role.ITEM:
-            return self._mappings[index.row()]
-        return None
+        return self._mappings[index.row()] if role == Role.ITEM else None
 
     @staticmethod
     def _mapping_list_data(list_item, role):
@@ -283,14 +279,12 @@ class MappingsModel(QAbstractItemModel):
             if column == FlattenedColumn.NAME:
                 return flattened_mappings.display_colors[index.row()]
             if column == FlattenedColumn.POSITION:
-                issues = flattened_mappings.display_row_issues(index.row())
-                if issues:
+                if issues := flattened_mappings.display_row_issues(index.row()):
                     return ERROR_COLOR
                 return None
         if role == Qt.ItemDataRole.ToolTipRole:
             if column == FlattenedColumn.POSITION:
-                issues = flattened_mappings.display_row_issues(index.row())
-                if issues:
+                if issues := flattened_mappings.display_row_issues(index.row()):
                     return issues
                 return None
             if column == FlattenedColumn.REGEXP:
@@ -354,10 +348,11 @@ class MappingsModel(QAbstractItemModel):
         column = index.column()
         if column == FlattenedColumn.NAME:
             return non_editable
-        if flattened_item.root_mapping.is_pivoted():
-            # special case where we have pivoted data
-            if index.row() == len(flattened_item.display_names) - 1:
-                return non_editable
+        if (
+            flattened_item.root_mapping.is_pivoted()
+            and index.row() == len(flattened_item.display_names) - 1
+        ):
+            return non_editable
         if column == FlattenedColumn.POSITION:
             component = flattened_item.component_at(index.row())
             if component.value is None and component.position == Position.header:
@@ -430,14 +425,16 @@ class MappingsModel(QAbstractItemModel):
         Returns:
             dict: stored data
         """
-        table_dicts = dict()
-        for table_item in self._mappings[1:]:
-            if not table_item.real:
-                continue
-            table_dicts[table_item.name] = [
-                unparse_named_mapping_spec(list_item.name, list_item.flattened_mappings.root_mapping)
+        table_dicts = {
+            table_item.name: [
+                unparse_named_mapping_spec(
+                    list_item.name, list_item.flattened_mappings.root_mapping
+                )
                 for list_item in table_item.mapping_list
             ]
+            for table_item in self._mappings[1:]
+            if table_item.real
+        }
         selected_tables = self.checked_table_names()
         return {"table_mappings": table_dicts, "selected_tables": selected_tables}
 
@@ -959,7 +956,7 @@ class MappingsModel(QAbstractItemModel):
         parent_index = index.parent()
         mapping_list_row = parent_index.row()
         table_row = parent_index.parent().row()
-        commands = list()
+        commands = []
         if new_type != previous_type:
             commands.append(
                 SetMappingPositionType(table_row, mapping_list_row, row, self, new_type, previous_type, previous_ref)

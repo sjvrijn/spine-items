@@ -29,6 +29,15 @@ def scan_for_resources(provider, url):
     Returns:
         list of ProjectItemResource: output resources
     """
-    if not url:
-        return list()
-    return [database_resource(provider.name, str(url), label=database_label(provider.name), filterable=True)]
+    return (
+        [
+            database_resource(
+                provider.name,
+                str(url),
+                label=database_label(provider.name),
+                filterable=True,
+            )
+        ]
+        if url
+        else []
+    )

@@ -334,7 +334,9 @@ class ImportEditorWindow(SpecificationEditorWindowBase):
                 self._show_status_bar_msg(f"Could not open {filename[0]}")
                 return
         expected_options = ("table_mappings", "table_types", "table_row_types", "table_options", "selected_tables")
-        if not isinstance(settings, dict) or not any(key in expected_options for key in settings.keys()):
+        if not isinstance(settings, dict) or all(
+            key not in expected_options for key in settings.keys()
+        ):
             self._show_status_bar_msg(f"{filename[0]} does not contain and import mapping")
         self._undo_stack.push(RestoreMappingsFromDict(self._import_sources, self._mappings_model, settings))
         self._show_status_bar_msg(f"Mapping loaded from {filename[0]}")

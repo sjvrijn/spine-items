@@ -65,15 +65,17 @@ class TestImportSources(unittest.TestCase):
         with signal_waiter(connector.data_ready) as waiter:
             source_table_model.fetchMore(QModelIndex())
             waiter.wait()
-        header = []
-        for column in range(source_table_model.columnCount()):
-            header.append(source_table_model.headerData(column))
+        header = [
+            source_table_model.headerData(column)
+            for column in range(source_table_model.columnCount())
+        ]
         self.assertEqual(header, [])
         data_rows = []
         for row in range(source_table_model.rowCount()):
-            row_data = []
-            for column in range(source_table_model.columnCount()):
-                row_data.append(source_table_model.index(row, column).data())
+            row_data = [
+                source_table_model.index(row, column).data()
+                for column in range(source_table_model.columnCount())
+            ]
             data_rows.append(row_data)
         self.assertEqual(data_rows, [])
         connector.close_connection()
@@ -105,15 +107,17 @@ class TestImportSources(unittest.TestCase):
         with signal_waiter(connector.data_ready) as waiter:
             source_table_model.fetchMore(QModelIndex())
             waiter.wait()
-        header = []
-        for column in range(source_table_model.columnCount()):
-            header.append(source_table_model.headerData(column))
+        header = [
+            source_table_model.headerData(column)
+            for column in range(source_table_model.columnCount())
+        ]
         self.assertEqual(header, [1, 2])
         data_rows = []
         for row in range(source_table_model.rowCount()):
-            row_data = []
-            for column in range(source_table_model.columnCount()):
-                row_data.append(source_table_model.index(row, column).data())
+            row_data = [
+                source_table_model.index(row, column).data()
+                for column in range(source_table_model.columnCount())
+            ]
             data_rows.append(row_data)
         self.assertEqual(data_rows, [["data 1", "data 2"]])
         connector.close_connection()
@@ -145,15 +149,17 @@ class TestImportSources(unittest.TestCase):
         with signal_waiter(connector.data_ready) as waiter:
             source_table_model.fetchMore(QModelIndex())
             waiter.wait()
-        header = []
-        for column in range(source_table_model.columnCount()):
-            header.append(source_table_model.headerData(column))
+        header = [
+            source_table_model.headerData(column)
+            for column in range(source_table_model.columnCount())
+        ]
         self.assertEqual(header, ["header 1", "header 2"])
         data_rows = []
         for row in range(source_table_model.rowCount()):
-            row_data = []
-            for column in range(source_table_model.columnCount()):
-                row_data.append(source_table_model.index(row, column).data())
+            row_data = [
+                source_table_model.index(row, column).data()
+                for column in range(source_table_model.columnCount())
+            ]
             data_rows.append(row_data)
         self.assertEqual(data_rows, [])
         connector.close_connection()
@@ -185,15 +191,17 @@ class TestImportSources(unittest.TestCase):
         with signal_waiter(connector.data_ready) as waiter:
             source_table_model.fetchMore(QModelIndex())
             waiter.wait()
-        header = []
-        for column in range(source_table_model.columnCount()):
-            header.append(source_table_model.headerData(column))
+        header = [
+            source_table_model.headerData(column)
+            for column in range(source_table_model.columnCount())
+        ]
         self.assertEqual(header, ["header 1", "header 2"])
         data_rows = []
         for row in range(source_table_model.rowCount()):
-            row_data = []
-            for column in range(source_table_model.columnCount()):
-                row_data.append(source_table_model.index(row, column).data())
+            row_data = [
+                source_table_model.index(row, column).data()
+                for column in range(source_table_model.columnCount())
+            ]
             data_rows.append(row_data)
         self.assertEqual(data_rows, [["data 1", "data 2"]])
         connector.close_connection()

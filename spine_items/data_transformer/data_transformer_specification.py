@@ -75,8 +75,5 @@ class DataTransformerSpecification(ProjectItemSpecification):
         else:
             # For legacy JSON.
             renaming = specification_dict.get("entity_class_name_map")
-            if renaming is not None:
-                settings = EntityClassRenamingSettings(renaming)
-            else:
-                settings = None
+            settings = None if renaming is None else EntityClassRenamingSettings(renaming)
         return DataTransformerSpecification(name, settings, description)

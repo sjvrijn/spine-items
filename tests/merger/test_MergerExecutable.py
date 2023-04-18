@@ -44,7 +44,9 @@ class TestMergerExecutable(unittest.TestCase):
         name = "Output Data Store"
         item_dict = {"type": "Data Store", "description": "", "x": 0, "y": 0, "cancel_on_error": True}
         logger = mock.MagicMock()
-        item = ExecutableItem.from_dict(item_dict, name, self._temp_dir.name, None, dict(), logger)
+        item = ExecutableItem.from_dict(
+            item_dict, name, self._temp_dir.name, None, {}, logger
+        )
         self.assertIsInstance(item, ExecutableItem)
         self.assertEqual("Merger", item.item_type())
 
@@ -63,7 +65,7 @@ class TestMergerExecutable(unittest.TestCase):
     def test_execute_merge_two_dbs(self):
         """Creates two db's with some data and merges them to a third db."""
         db1_path = Path(self._temp_dir.name, "db1.sqlite")
-        db1_url = "sqlite:///" + str(db1_path)
+        db1_url = f"sqlite:///{str(db1_path)}"
         # Add some data to db1
         db1_map = DatabaseMapping(db1_url, create=True)
         import_functions.import_object_classes(db1_map, ["a"])
@@ -71,7 +73,7 @@ class TestMergerExecutable(unittest.TestCase):
         # Commit to db1
         db1_map.commit_session("Add an object class 'a' and an object for unit tests.")
         db2_path = Path(self._temp_dir.name, "db2.sqlite")
-        db2_url = "sqlite:///" + str(db2_path)
+        db2_url = f"sqlite:///{str(db2_path)}"
         # Add some data to db2
         db2_map = DatabaseMapping(db2_url, create=True)
         import_functions.import_object_classes(db2_map, ["b"])
@@ -83,7 +85,7 @@ class TestMergerExecutable(unittest.TestCase):
         db2_map.connection.close()
         # Make an empty output db
         db3_path = Path(self._temp_dir.name, "db3.sqlite")
-        db3_url = "sqlite:///" + str(db3_path)
+        db3_url = f"sqlite:///{str(db3_path)}"
         create_new_spine_database(db3_url)
         logger = mock.MagicMock()
         logger.__reduce__ = lambda _: (mock.MagicMock, ())
@@ -110,14 +112,14 @@ class TestMergerExecutable(unittest.TestCase):
 
     def test_write_order(self):
         db1_path = Path(self._temp_dir.name, "db1.sqlite")
-        db1_url = "sqlite:///" + str(db1_path)
+        db1_url = f"sqlite:///{str(db1_path)}"
         # Add some data to db1
         db1_map = DatabaseMapping(db1_url, create=True)
         import_functions.import_data(db1_map, object_classes=["fish"])
         # Commit to db1
         db1_map.commit_session("Add test data.")
         db2_path = Path(self._temp_dir.name, "db2.sqlite")
-        db2_url = "sqlite:///" + str(db2_path)
+        db2_url = f"sqlite:///{str(db2_path)}"
         # Add some data to db2
         db2_map = DatabaseMapping(db2_url, create=True)
         import_functions.import_data(db2_map, object_classes=["cat"])
@@ -128,7 +130,7 @@ class TestMergerExecutable(unittest.TestCase):
         db2_map.connection.close()
         # Make an empty output db
         db3_path = Path(self._temp_dir.name, "db3.sqlite")
-        db3_url = "sqlite:///" + str(db3_path)
+        db3_url = f"sqlite:///{str(db3_path)}"
         # Make two mergers
         logger = mock.MagicMock()
         logger.__reduce__ = lambda _: (mock.MagicMock, ())

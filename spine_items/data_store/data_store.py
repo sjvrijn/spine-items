@@ -64,7 +64,7 @@ class DataStore(ProjectItem):
         except OSError:
             self._logger.msg_error.emit(f"[OSError] Creating directory {self.logs_dir} failed. Check permissions.")
         if url is None:
-            url = dict()
+            url = {}
         self._url = self.parse_url(url)
         self._url_validated = False
         self._resource_to_replace = None
@@ -150,7 +150,9 @@ class DataStore(ProjectItem):
         Returns:
             bool: True if the file was created successfully, False otherwise
         """
-        candidate_path = os.path.abspath(os.path.join(self.data_dir, self.name + ".sqlite"))
+        candidate_path = os.path.abspath(
+            os.path.join(self.data_dir, f"{self.name}.sqlite")
+        )
         answer = QFileDialog.getSaveFileName(self._toolbox, "Create SQLite file", candidate_path)
         file_path = answer[0]
         if not file_path:  # Cancel button clicked
@@ -204,7 +206,7 @@ class DataStore(ProjectItem):
         old_url = convert_to_sqlalchemy_url(self._url, self.name)
         new_dialect = kwargs.get("dialect")
         if new_dialect == "sqlite":
-            kwargs.update({"username": "", "password": "", "host": "", "port": ""})
+            kwargs |= {"username": "", "password": "", "host": "", "port": ""}
         self._url.update(kwargs)
         new_url = convert_to_sqlalchemy_url(self._url, self.name)
         self.load_url_into_selections(self._url)
@@ -337,8 +339,9 @@ class DataStore(ProjectItem):
             if not sqlite_file_creation_successful:  # User cancelled
                 return
         elif self._url["dialect"] == "mysql":
-            sa_url = convert_to_sqlalchemy_url(self._url, self.name, self._logger)
-            if sa_url:
+            if sa_url := convert_to_sqlalchemy_url(
+                self._url, self.name, self._logger
+            ):
                 self._toolbox.db_mngr.create_new_spine_database(sa_url, self._logger)
         else:
             self._logger.msg_error.emit(f"Unknown data store dialect: {self._url['dialect']}.")
@@ -489,8 +492,7 @@ class DataStore(ProjectItem):
         if not self._url_validated:
             return []
         sa_url = convert_to_sqlalchemy_url(self._url, self.name)
-        resources = scan_for_resources(self, sa_url)
-        return resources
+        return scan_for_resources(self, sa_url)
 
     def resources_for_direct_predecessors(self):
         """See base class."""

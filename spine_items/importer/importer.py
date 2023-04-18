@@ -73,7 +73,9 @@ class Importer(DBWriterItemBase):
         self.cancel_on_error = cancel_on_error
         self.on_conflict = on_conflict
         self._file_model = CheckableFileListModel(header_label="Available resources")
-        self._file_model.set_initial_state(file_selection if file_selection is not None else dict())
+        self._file_model.set_initial_state(
+            file_selection if file_selection is not None else {}
+        )
         self._file_model.checked_state_changed.connect(self._push_file_selection_change_to_undo_stack)
 
     @staticmethod
@@ -222,14 +224,13 @@ class Importer(DBWriterItemBase):
             resource = self._file_model.resource(index)
             if resource.type_ == "database":
                 filepath = resource.url
-            else:
-                if not resource.hasfilepath:
-                    self._logger.msg_error.emit("File does not exist yet.")
+            elif resource.hasfilepath:
+                if not os.path.exists(resource.path):
+                    self._logger.msg_error.emit(f"Cannot find file '{filepath}'.")
                 else:
-                    if not os.path.exists(resource.path):
-                        self._logger.msg_error.emit(f"Cannot find file '{filepath}'.")
-                    else:
-                        filepath = resource.path
+                    filepath = resource.path
+            else:
+                self._logger.msg_error.emit("File does not exist yet.")
         self._toolbox.show_specification_form(self.item_type(), self.specification(), self, filepath=filepath)
 
     def select_connector_type(self, index):
@@ -269,9 +270,10 @@ class Importer(DBWriterItemBase):
             self.add_notification(
                 "This Importer does not have a specification. Set it in the Importer Properties Panel."
             )
-        duplicates = self._file_model.duplicate_paths()
-        if duplicates:
-            self.add_notification("Duplicate input files from upstream items:<br>{}".format("<br>".join(duplicates)))
+        if duplicates := self._file_model.duplicate_paths():
+            self.add_notification(
+                f'Duplicate input files from upstream items:<br>{"<br>".join(duplicates)}'
+            )
         if self._file_model.rowCount() == 0:
             self.add_notification(
                 "This Importer does not have any input data. "
@@ -281,13 +283,10 @@ class Importer(DBWriterItemBase):
     def item_dict(self):
         """Returns a dictionary corresponding to this item."""
         d = super().item_dict()
-        if not self.specification():
-            d["specification"] = ""
-        else:
-            d["specification"] = self.specification().name
+        d["specification"] = self.specification().name if self.specification() else ""
         d["cancel_on_error"] = self.cancel_on_error
         d["on_conflict"] = self.on_conflict
-        selections = list()
+        selections = []
         for row in range(self._file_model.rowCount()):
             label, selected = self._file_model.checked_data(self._file_model.index(row, 0))
             selections.append([label, selected])
@@ -301,7 +300,7 @@ class Importer(DBWriterItemBase):
         specification_name = item_dict.get("specification", "")
         cancel_on_error = item_dict.get("cancel_on_error", False)
         on_conflict = item_dict.get("on_conflict", "merge")
-        file_selection = {label: selected for label, selected in item_dict.get("file_selection", list())}
+        file_selection = dict(item_dict.get("file_selection", []))
         return Importer(
             name, description, x, y, toolbox, project, specification_name, cancel_on_error, on_conflict, file_selection
         )
@@ -337,12 +336,12 @@ class Importer(DBWriterItemBase):
         try:
             file_selection = item_dict["file_selection"]
         except KeyError:
-            item_dict["file_selection"] = list()
+            item_dict["file_selection"] = []
             return item_dict
         if len(file_selection) == 0:
             return item_dict
         if isinstance(file_selection[0], bool):
-            item_dict["file_selection"] = list()
+            item_dict["file_selection"] = []
         return item_dict
 
     @staticmethod

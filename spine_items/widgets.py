@@ -96,7 +96,7 @@ class DataTreeView(QTreeView):
         """
         super().__init__(parent=parent)
         self.drag_start_pos = None
-        self.drag_indexes = list()
+        self.drag_indexes = []
 
     def dragEnterEvent(self, event):
         """Accepts file drops from the filesystem."""
@@ -138,16 +138,15 @@ class DataTreeView(QTreeView):
             return
         drag = QDrag(self)
         mimeData = QMimeData()
-        urls = list()
+        urls = []
         for index in self.drag_indexes:
-            file_path = index.data(Qt.ItemDataRole.UserRole)
-            if not file_path:
+            if file_path := index.data(Qt.ItemDataRole.UserRole):
+                urls.append(QUrl.fromLocalFile(file_path))
+            else:
                 return
-            urls.append(QUrl.fromLocalFile(file_path))
         mimeData.setUrls(urls)
         drag.setMimeData(mimeData)
-        icon = self.drag_indexes[0].data(Qt.ItemDataRole.DecorationRole)
-        if icon:
+        if icon := self.drag_indexes[0].data(Qt.ItemDataRole.DecorationRole):
             pixmap = icon.pixmap(32, 32)
             drag.setPixmap(pixmap)
             drag.setHotSpot(pixmap.rect().center())
@@ -272,12 +271,9 @@ class UrlSelectorMixin:
             import pyodbc  # pylint: disable=import-outside-toplevel
 
             dsns = pyodbc.dataSources()
-            # Collect dsns which use the msodbcsql driver
-            mssql_dsns = list()
-            for key, value in dsns.items():
-                if "msodbcsql" in value.lower():
-                    mssql_dsns.append(key)
-            if mssql_dsns:
+            if mssql_dsns := [
+                key for key, value in dsns.items() if "msodbcsql" in value.lower()
+            ]:
                 self.ui.comboBox_dsn.clear()
                 self.ui.comboBox_dsn.addItems(mssql_dsns)
                 self.ui.comboBox_dsn.setCurrentIndex(-1)
@@ -456,12 +452,9 @@ class UrlSelectorWidget(QWidget):
             import pyodbc  # pylint: disable=import-outside-toplevel
 
             dsns = pyodbc.dataSources()
-            # Collect dsns which use the msodbcsql driver
-            mssql_dsns = list()
-            for key, value in dsns.items():
-                if "msodbcsql" in value.lower():
-                    mssql_dsns.append(key)
-            if mssql_dsns:
+            if mssql_dsns := [
+                key for key, value in dsns.items() if "msodbcsql" in value.lower()
+            ]:
                 self._ui.comboBox_dsn.clear()
                 self._ui.comboBox_dsn.addItems(mssql_dsns)
                 self._ui.comboBox_dsn.setCurrentIndex(-1)
@@ -554,9 +547,7 @@ class UrlSelectorDialog(QDialog):
 
     @property
     def url(self):
-        if self._sa_url is None:
-            return ""
-        return str(self._sa_url)
+        return "" if self._sa_url is None else str(self._sa_url)
 
     def url_dict(self):
         return self.ui.url_selector_widget.url_dict()

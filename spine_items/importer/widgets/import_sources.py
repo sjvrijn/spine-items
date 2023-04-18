@@ -325,8 +325,8 @@ class ImportSources(QObject):
             if col_type is None:
                 if default_column_type is None:
                     default_column_type = self._connector.table_default_column_type.get(table_name)
-                    if default_column_type is None:
-                        default_column_type = StringConvertSpec()
+                if default_column_type is None:
+                    default_column_type = StringConvertSpec()
                 col_type = default_column_type.DISPLAY_NAME
             self._source_data_model.set_type(
                 col, value_to_convert_spec(col_type), orientation=Qt.Orientation.Horizontal
@@ -429,10 +429,7 @@ class ImportSources(QObject):
             return
         flattened_mapping = list_index.data(Role.FLATTENED_MAPPINGS)
         last_pivot_row = flattened_mapping.root_mapping.last_pivot_row()
-        if last_pivot_row == -1:
-            pivoted_rows = []
-        else:
-            pivoted_rows = list(range(last_pivot_row + 1))
+        pivoted_rows = [] if last_pivot_row == -1 else list(range(last_pivot_row + 1))
         self._ui.source_data_table.verticalHeader().sections_with_buttons = pivoted_rows
 
     @Slot(QPoint)
@@ -497,7 +494,7 @@ class ImportSources(QObject):
         Returns:
             bytes: pickled list
         """
-        mapping_dicts = list()
+        mapping_dicts = []
         for list_row in range(self._mappings_model.rowCount(table_index)):
             list_index = self._mappings_model.index(list_row, 0, table_index)
             name = list_index.data()
@@ -547,8 +544,7 @@ class ImportSources(QObject):
         col_types = self._connector.table_types
         row_types = self._connector.table_row_types
         table_name = table_index.data()
-        options_dict = dict()
-        options_dict["options"] = options.get(table_name, {})
+        options_dict = {"options": options.get(table_name, {})}
         options_dict["col_types"] = col_types.get(table_name, {})
         options_dict["row_types"] = row_types.get(table_name, {})
         return pickle.dumps(options_dict)
@@ -596,7 +592,7 @@ class ImportSources(QObject):
 def _sanitize_data(data, header):
     """Fills empty data cells with None."""
     expected_columns = len(header) if header else max((len(x) for x in data))
-    sanitized_data = list()
+    sanitized_data = []
     for row in data:
         length_diff = expected_columns - len(row)
         if length_diff > 0:

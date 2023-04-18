@@ -70,7 +70,7 @@ class ParameterRename(QObject):
         indexes = self._ui.parameter_rename_table_view.selectionModel().selectedIndexes()
         if not indexes:
             return
-        rows = set(self._sorted_rename_table_model.mapToSource(i).row() for i in indexes)
+        rows = {self._sorted_rename_table_model.mapToSource(i).row() for i in indexes}
         if len(rows) == 1:
             self._undo_stack.push(RemoveRow("remove parameter", self._rename_table_model, next(iter(rows))))
         else:
@@ -113,7 +113,7 @@ class ParameterRename(QObject):
         Returns:
             FilterSettings: settings
         """
-        settings = dict()
+        settings = {}
         for row in range(self._rename_table_model.rowCount()):
             entity_class = self._rename_table_model.index(row, RenamesTableColumn.CLASS).data()
             parameter = self._rename_table_model.index(row, RenamesTableColumn.PARAMETER).data()

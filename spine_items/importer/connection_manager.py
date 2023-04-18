@@ -222,9 +222,11 @@ class ConnectionManager(QObject):
         self._table_options.setdefault(self._current_table, {}).update(options)
 
     def get_current_options(self):
-        if not self._current_table:
-            return {}
-        return self._table_options.get(self._current_table, {})
+        return (
+            self._table_options.get(self._current_table, {})
+            if self._current_table
+            else {}
+        )
 
     def get_current_option_value(self, option_key):
         """Returns the value for option_key for the current table or the default value."""

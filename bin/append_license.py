@@ -30,11 +30,11 @@ def append_license(path):
 def _append_license_py(path):
     """Appends a license header to given .py, .ui or .xml file."""
     base_name = os.path.basename(path)
-    print("Appending license to " + base_name)
+    print(f"Appending license to {base_name}")
     with open(path) as input_file:
         contents = input_file.readlines()
     if contents[2].startswith("# Copyright"):
-        print(base_name + " seems to have a license already. Skipping.")
+        print(f"{base_name} seems to have a license already. Skipping.")
         return
     with open(path, "w") as output_file:
         output_file.writelines(contents[:1])  # First line contains encoding.
@@ -44,18 +44,16 @@ def _append_license_py(path):
 
 def _append_license_xml(path):
     """Appends a license header to given .py, .ui or .xml file."""
-    xml_license = list()
-    xml_license.append("<!--\n")
-    for line in license_text:
-        xml_license.append(line.replace("/", "\\/"))
+    xml_license = ["<!--\n"]
+    xml_license.extend(line.replace("/", "\\/") for line in license_text)
     xml_license.append("-->\n")
     with open(path) as input_file:
         contents = input_file.readlines()
     base_name = os.path.basename(path)
     if contents[1].startswith("<!--"):
-        print(base_name + " seems to have a license already. Skipping.")
+        print(f"{base_name} seems to have a license already. Skipping.")
         return
-    print("Appending license to " + base_name)
+    print(f"Appending license to {base_name}")
     with open(path, "w") as output_file:
         output_file.writelines(contents[:1])  # First line contains XML schema etc.
         output_file.writelines(xml_license)

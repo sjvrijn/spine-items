@@ -207,7 +207,7 @@ class ImportMappingOptions:
         self._ui_ignore_columns_filtermenu._filter._filter_model.set_selected(skip_cols)
         skip_button_text = ", ".join(str(c) for c in skip_cols)
         if len(skip_button_text) > 20:
-            skip_button_text = skip_button_text[:20] + "..."
+            skip_button_text = f"{skip_button_text[:20]}..."
         self._ui.ignore_columns_button.setText(skip_button_text)
 
     @Slot(str)
@@ -460,4 +460,6 @@ class ImportMappingOptions:
         self._ui.map_dimension_spin_box.setEnabled(is_map)
         self._ui.map_dimension_spin_box.setValue(dimension_count)
         self._ui.map_compression_check_box.setEnabled(is_map)
-        self._ui.map_compression_check_box.setChecked(True if is_map and value_mapping.compress else False)
+        self._ui.map_compression_check_box.setChecked(
+            bool(is_map and value_mapping.compress)
+        )

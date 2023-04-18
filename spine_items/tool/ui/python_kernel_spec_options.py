@@ -176,6 +176,5 @@ class Ui_Form(object):
         self.pushButton_open_kernel_spec_viewer.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Open Python kernel spec editor</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.pushButton_open_kernel_spec_viewer.setText(QCoreApplication.translate("Form", u"Kernel spec editor", None))
-        pass
     # retranslateUi
 

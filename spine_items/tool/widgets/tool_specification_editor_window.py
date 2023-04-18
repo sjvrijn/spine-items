@@ -172,12 +172,12 @@ class ToolSpecificationEditorWindow(SpecificationEditorWindowBase):
         Args:
             row (int): Active row in tool type combobox
         """
-        optional_widget = self._ui.horizontalLayout_options_placeholder.takeAt(0)
-        if optional_widget:
+        if optional_widget := self._ui.horizontalLayout_options_placeholder.takeAt(
+            0
+        ):
             optional_widget.widget().close()
         tooltype = self._ui.comboBox_tooltype.itemText(row)
-        optional_widget = self._make_optional_widget(tooltype)
-        if optional_widget:
+        if optional_widget := self._make_optional_widget(tooltype):
             self._ui.horizontalLayout_options_placeholder.addWidget(optional_widget)
             optional_widget.show()
 
@@ -188,8 +188,7 @@ class ToolSpecificationEditorWindow(SpecificationEditorWindowBase):
             specification (ToolSpecification): Specification that is opened in the editor window
         """
         toolspectype = specification.tooltype.lower()
-        opt_widget = self._get_optional_widget(toolspectype)
-        if opt_widget:
+        if opt_widget := self._get_optional_widget(toolspectype):
             opt_widget.init_widget(specification)
 
     def _make_new_specification(self, spec_name):
@@ -206,10 +205,9 @@ class ToolSpecificationEditorWindow(SpecificationEditorWindowBase):
             return None
         new_spec_dict = {"name": spec_name, "description": self._spec_toolbar.description(), "tooltype": toolspectype}
         main_prgm_dir, main_prgm_file_name = os.path.split(main_program_file) if main_program_file else ("", "")
-        if not main_prgm_dir:
-            self.includes_main_path = None
-        else:
-            self.includes_main_path = os.path.abspath(main_prgm_dir)
+        self.includes_main_path = (
+            os.path.abspath(main_prgm_dir) if main_prgm_dir else None
+        )
         self._label_main_path.setText(self.includes_main_path)
         new_spec_dict["includes"] = [main_prgm_file_name] if main_prgm_file_name else []
         new_spec_dict["includes"] += self._additional_program_file_list()
@@ -320,9 +318,11 @@ class ToolSpecificationEditorWindow(SpecificationEditorWindowBase):
         """Returns the full path to the current main program file or None if there's no main program."""
         index = self.programfiles_model.index(0, 0)
         root_item = self.programfiles_model.itemFromIndex(index)
-        if not root_item.hasChildren():
-            return None
-        return root_item.child(0).data(Qt.ItemDataRole.UserRole)
+        return (
+            root_item.child(0).data(Qt.ItemDataRole.UserRole)
+            if root_item.hasChildren()
+            else None
+        )
 
     def _additional_program_file_list(self):
         return self.spec_dict.get("includes", [])[1:]
@@ -530,10 +530,7 @@ class ToolSpecificationEditorWindow(SpecificationEditorWindowBase):
         toolspectype = self.spec_dict.get("tooltype", "")
         opt_widget = self._get_optional_widget(toolspectype)
         item = opt_widget.kernel_spec_model.item(index)
-        if not item.data():
-            new_kernel_spec = ""
-        else:
-            new_kernel_spec = item.data()["kernel_spec_name"]
+        new_kernel_spec = item.data()["kernel_spec_name"] if item.data() else ""
         previous_kernel_spec = self.spec_dict["execution_settings"]["kernel_spec_name"]
         if new_kernel_spec == previous_kernel_spec:
             return
@@ -701,9 +698,7 @@ class ToolSpecificationEditorWindow(SpecificationEditorWindowBase):
             str: file path
         """
         components = _path_components_from_index(index)
-        if not components:
-            return ""
-        return os.path.join(self.includes_main_path, *components)
+        return os.path.join(self.includes_main_path, *components) if components else ""
 
     def _clear_program_text_edit(self):
         """Clears contents of the text editor."""
@@ -741,7 +736,7 @@ class ToolSpecificationEditorWindow(SpecificationEditorWindowBase):
             document = self._programfile_documents[file_path]
         self._ui.textEdit_program.setDocument(document)
         self._ui.textEdit_program.setEnabled(True)
-        self._ui.dockWidget_program.setWindowTitle(os.path.basename(file_path) + "[*]")
+        self._ui.dockWidget_program.setWindowTitle(f"{os.path.basename(file_path)}[*]")
 
     @Slot(bool)
     def browse_main_program_file(self, checked=False):
@@ -750,10 +745,10 @@ class ToolSpecificationEditorWindow(SpecificationEditorWindowBase):
         answer = QFileDialog.getOpenFileName(
             self, "Select existing main program file", self._project.project_dir, "*.*"
         )
-        file_path = answer[0]
-        if not file_path:  # Cancel button clicked
+        if file_path := answer[0]:
+            self.populate_main_programfile(file_path)
+        else:
             return
-        self.populate_main_programfile(file_path)
 
     @Slot(bool)
     def new_main_program_file(self, _=False):
@@ -797,10 +792,10 @@ class ToolSpecificationEditorWindow(SpecificationEditorWindowBase):
         path = self.includes_main_path if self.includes_main_path else self._project.project_dir
         # noinspection PyCallByClass, PyTypeChecker, PyArgumentList
         answer = QFileDialog.getOpenFileNames(self, "Add program file", path, "*.*")
-        file_paths = answer[0]
-        if not file_paths:  # Cancel button clicked
+        if file_paths := answer[0]:
+            self.add_program_files(*file_paths)
+        else:
             return
-        self.add_program_files(*file_paths)
 
     @Slot(bool)
     def show_add_program_dirs_dialog(self, checked=False):
@@ -810,10 +805,9 @@ class ToolSpecificationEditorWindow(SpecificationEditorWindowBase):
         path = self.includes_main_path if self.includes_main_path else self._project.project_dir
         # noinspection PyCallByClass, PyTypeChecker, PyArgumentList
         answer = QFileDialog.getExistingDirectory(self, "Select a directory to add to program files", path)
-        file_paths = list()
+        file_paths = []
         for root, _, files in os.walk(answer):
-            for file in files:
-                file_paths.append(os.path.abspath(os.path.join(root, file)))
+            file_paths.extend(os.path.abspath(os.path.join(root, file)) for file in files)
         self.add_program_files(*file_paths)
 
     @Slot(list)
@@ -928,7 +922,7 @@ class ToolSpecificationEditorWindow(SpecificationEditorWindowBase):
                 "Please open the file manually.".format(ext)
             )
             return
-        url = "file:///" + os.path.join(self.includes_main_path, program_file)
+        url = f"file:///{os.path.join(self.includes_main_path, program_file)}"
         # noinspection PyCallByClass, PyTypeChecker, PyArgumentList
         res = open_url(url)
         if not res:

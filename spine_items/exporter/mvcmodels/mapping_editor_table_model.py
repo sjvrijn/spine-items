@@ -172,9 +172,7 @@ class MappingEditorTableModel(QAbstractTableModel):
                 return "Regular expression to filter database items."
             elif column == EditorColumn.NULLABLE:
                 return "When checked, ignore this row if it yields nothing to export."
-        if role == self.MAPPING_ITEM_ROLE:
-            return self._mappings[index.row()]
-        return None
+        return self._mappings[index.row()] if role == self.MAPPING_ITEM_ROLE else None
 
     def flags(self, index=QModelIndex()):
         row = index.row()
@@ -280,10 +278,7 @@ class MappingEditorTableModel(QAbstractTableModel):
         """
         try:
             value = max(int(value), 1)
-            if is_pivoted(mapping.position):
-                value = -value
-            else:
-                value = value - 1
+            value = -value if is_pivoted(mapping.position) else value - 1
         except ValueError:
             value = value.strip().lower()
             if value.startswith("t"):
@@ -410,10 +405,7 @@ class MappingEditorTableModel(QAbstractTableModel):
             if i != position:
                 return True
         pivoted_positions = sorted([m.position for m in self._mappings if is_pivoted(m.position)])
-        for i, position in enumerate(pivoted_positions):
-            if i != position:
-                return True
-        return False
+        return any(i != position for i, position in enumerate(pivoted_positions))
 
     def compact(self):
         """Compacts the mapping."""

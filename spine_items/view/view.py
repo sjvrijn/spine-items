@@ -47,8 +47,8 @@ class View(ProjectItem):
         """
         super().__init__(name, description, x, y, project)
         self._toolbox = toolbox
-        self._references = dict()
-        self._pinned_values = pinned_values if pinned_values is not None else dict()
+        self._references = {}
+        self._pinned_values = pinned_values if pinned_values is not None else {}
         self.pinned_value_model = QStandardItemModel()
         self.reference_model = QStandardItemModel()
         self._spine_ref_icon = QIcon(QPixmap(":/icons/Spine_db_ref_icon.png"))
@@ -99,10 +99,10 @@ class View(ProjectItem):
     def open_editor(self, checked=False):
         """Opens selected db in the Spine database editor."""
         indexes = self._selected_reference_indexes()
-        db_url_codenames = self._db_url_codenames(indexes)
-        if not db_url_codenames:
+        if db_url_codenames := self._db_url_codenames(indexes):
+            self._toolbox.db_mngr.open_db_editor(db_url_codenames)
+        else:
             return
-        self._toolbox.db_mngr.open_db_editor(db_url_codenames)
 
     @Slot(bool)
     def pin_values(self, checked=False):
@@ -174,7 +174,7 @@ class View(ProjectItem):
         pks_by_resource_label = {}
         for value in pinned_values:
             resource_label, pk = value
-            pks_by_resource_label.setdefault(resource_label, list()).append(pk)
+            pks_by_resource_label.setdefault(resource_label, []).append(pk)
         fetch_id_base = 0
         for resource_label, pks in pks_by_resource_label.items():
             url_provider_tuple = self._references.get(resource_label)
@@ -227,7 +227,7 @@ class View(ProjectItem):
             except PlottingError as error:
                 self._logger.msg_error.emit(str(error))
                 return
-            plot_widget.use_as_window(self._toolbox, self.name + " / " + self._pin_to_plot)
+            plot_widget.use_as_window(self._toolbox, f"{self.name} / {self._pin_to_plot}")
             plot_widget.show()
         else:
             self._logger.msg_warning.emit("Nothing to plot.")
@@ -350,7 +350,7 @@ class View(ProjectItem):
     @staticmethod
     def from_dict(name, item_dict, toolbox, project):
         description, x, y = ProjectItem.parse_item_dict(item_dict)
-        pinned_values = item_dict.get("pinned_values", dict())
+        pinned_values = item_dict.get("pinned_values", {})
         return View(name, description, x, y, toolbox, project, pinned_values=pinned_values)
 
 
@@ -580,11 +580,10 @@ class _DatabaseFetch(FetchParent):
             dict: match or None if not found
         """
         for parameter_value in parameter_value_items:
-            match = True
-            for key, filter_value in self._conditions.items():
-                if parameter_value[key] != filter_value:
-                    match = False
-                    break
+            match = all(
+                parameter_value[key] == filter_value
+                for key, filter_value in self._conditions.items()
+            )
             if match:
                 return parameter_value
         return None

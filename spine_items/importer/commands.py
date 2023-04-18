@@ -129,7 +129,7 @@ class UpdateTableItem(QUndoCommand):
             new_data (dict): updated item data
             is_empty_row (bool): True if the table doesn't contain any mappings
         """
-        text = "rename table" if not is_empty_row else "add table"
+        text = "add table" if is_empty_row else "rename table"
         super().__init__(text)
         self._model = model
         self._row = row
@@ -285,9 +285,12 @@ class SetConnectorOption(QUndoCommand):
         Returns:
             bool: True if merge was successful, False otherwise
         """
-        if not isinstance(command, SetConnectorOption):
-            return False
-        return command._option_key == self._option_key and command._value == self._value
+        return (
+            command._option_key == self._option_key
+            and command._value == self._value
+            if isinstance(command, SetConnectorOption)
+            else False
+        )
 
     def redo(self):
         """Changes the connector's option."""

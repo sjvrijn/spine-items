@@ -95,14 +95,10 @@ class SourceDataTableModel(MinimalTableModel):
         self.endInsertRows()
 
     def rowCount(self, parent=QModelIndex()):
-        if self._infinite:
-            return self._infinite_extent
-        return super().rowCount(parent)
+        return self._infinite_extent if self._infinite else super().rowCount(parent)
 
     def columnCount(self, parent=QModelIndex()):
-        if self._infinite:
-            return self._infinite_extent
-        return super().columnCount(parent)
+        return self._infinite_extent if self._infinite else super().columnCount(parent)
 
     def set_mapping_list_index(self, index):
         """Set index to mappings model.
@@ -309,9 +305,11 @@ class SourceDataTableModel(MinimalTableModel):
         Returns:
             bool: True if index is below the pivot, False otherwise
         """
-        if not flattened_mappings.root_mapping.is_pivoted():
-            return False
-        return row > last_row and column not in non_pivoted_and_skipped_columns
+        return (
+            row > last_row and column not in non_pivoted_and_skipped_columns
+            if flattened_mappings.root_mapping.is_pivoted()
+            else False
+        )
 
     @staticmethod
     def index_in_mapping(mapping, row, column, last_row, non_pivoted_and_skipped_columns):
@@ -333,10 +331,9 @@ class SourceDataTableModel(MinimalTableModel):
         if mapping.position < 0:
             if column in non_pivoted_and_skipped_columns:
                 return False
-            return row == -(mapping.position + 1)
-        if row <= last_row:
-            return False
-        return column == mapping.position
+            else:
+                return row == -(mapping.position + 1)
+        return False if row <= last_row else column == mapping.position
 
     def headerData(self, section, orientation=Qt.Orientation.Horizontal, role=Qt.ItemDataRole.DisplayRole):
         if (

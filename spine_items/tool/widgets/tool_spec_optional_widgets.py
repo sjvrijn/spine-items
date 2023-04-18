@@ -190,10 +190,7 @@ class PythonToolSpecOptionalWidget(OptionalWidget):
         p = self.ui.lineEdit_python_path.text()  # This may be an empty string
         j = ""
         item = self.kernel_spec_model.item(self.ui.comboBox_kernel_specs.currentIndex())
-        if not item.data():
-            selected_kernel_spec = ""
-        else:
-            selected_kernel_spec = item.data()["kernel_spec_name"]
+        selected_kernel_spec = item.data()["kernel_spec_name"] if item.data() else ""
         self._kernel_spec_editor = KernelEditor(self._parent, p, j, "python", selected_kernel_spec)
         self._kernel_spec_editor.finished.connect(self.python_kernel_editor_closed)
         self._kernel_spec_editor.open()
@@ -202,10 +199,7 @@ class PythonToolSpecOptionalWidget(OptionalWidget):
     def python_kernel_editor_closed(self, ret_code):
         """Catches the selected Python kernel name when the editor is closed."""
         item = self.kernel_spec_model.item(self.ui.comboBox_kernel_specs.currentIndex())
-        if not item.data():
-            previous_kernel_spec = ""
-        else:
-            previous_kernel_spec = item.data()["kernel_spec_name"]
+        previous_kernel_spec = item.data()["kernel_spec_name"] if item.data() else ""
         self._refresh_kernel_spec_model()
         if ret_code != 1:  # Editor closed with Cancel
             # Set previous kernel selected in Python kernel combobox if it still exists
@@ -322,6 +316,4 @@ class ExecutableToolSpecOptionalWidget(OptionalWidget):
     def get_current_shell(self):
         """Returns the selected shell in the shell combo box."""
         ind = self.ui.comboBox_shell.currentIndex()
-        if ind < 1:
-            return ""
-        return self.ui.comboBox_shell.currentText()
+        return "" if ind < 1 else self.ui.comboBox_shell.currentText()

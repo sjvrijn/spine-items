@@ -104,11 +104,7 @@ class CustomFileSystemWatcher(QFileSystemWatcher):
         return self.removePath(dirname)
 
     def remove_persistent_file_paths(self, paths):
-        removed_paths = []
-        for path in paths:
-            if self.remove_persistent_file_path(path):
-                removed_paths.append(path)
-        return removed_paths
+        return [path for path in paths if self.remove_persistent_file_path(path)]
 
     def add_persistent_dir_path(self, path):
         if not os.path.isdir(path):
@@ -125,8 +121,7 @@ class CustomFileSystemWatcher(QFileSystemWatcher):
         return self.removePath(path)
 
     def tear_down(self):
-        directories = self.directories()
-        if directories:
+        if directories := self.directories():
             self.removePaths(directories)
         self.deleteLater()
 
