@@ -90,10 +90,9 @@ class ImportMappings:
             self._ui.mapping_list.selectionModel().setCurrentIndex(
                 self._mappings_model.index(0, 0, current), QItemSelectionModel.ClearAndSelect
             )
-            buttons_enabled = True
         else:
             self._ui.mapping_list.selectionModel().setCurrentIndex(QModelIndex(), QItemSelectionModel.ClearAndSelect)
-            buttons_enabled = False
+        buttons_enabled = current.row() not in (0, len(self._ui.mapping_list.model()) - 1)
         self._set_mapping_list_buttons_enabled(buttons_enabled)
 
     @Slot(QModelIndex, int, int)
