@@ -90,10 +90,12 @@ class ImportMappings:
             self._ui.mapping_list.selectionModel().setCurrentIndex(
                 self._mappings_model.index(0, 0, current), QItemSelectionModel.ClearAndSelect
             )
+            self._set_mapping_list_remove_duplicate_enabled(True)
         else:
             self._ui.mapping_list.selectionModel().setCurrentIndex(QModelIndex(), QItemSelectionModel.ClearAndSelect)
+            self._set_mapping_list_remove_duplicate_enabled(False)
         buttons_enabled = current.row() not in (0, len(self._ui.mapping_list.model()) - 1)
-        self._set_mapping_list_buttons_enabled(buttons_enabled)
+        self._set_mapping_list_add_enabled(buttons_enabled)
 
     @Slot(QModelIndex, int, int)
     def _update_current_after_mapping_insertion(self, table_index, first, last):
@@ -128,15 +130,22 @@ class ImportMappings:
         if table_index != self._ui.mapping_list.rootIndex():
             self._ui.source_list.selectionModel().setCurrentIndex(table_index, QItemSelectionModel.ClearAndSelect)
 
-    def _set_mapping_list_buttons_enabled(self, enabled):
-        """Sets New, Duplicate and Remove button enabled state.
+    def _set_mapping_list_remove_duplicate_enabled(self, enabled):
+        """Sets Remove and Duplicate button enabled state.
+
+        Args:
+            enabled (bool): enabled state
+        """
+        self._ui.remove_button.setEnabled(enabled)
+        self._ui.duplicate_button.setEnabled(enabled)
+
+    def _set_mapping_list_add_enabled(self, enabled):
+        """Sets Add button enabled state.
 
         Args:
             enabled (bool): enabled state
         """
         self._ui.new_button.setEnabled(enabled)
-        self._ui.remove_button.setEnabled(enabled)
-        self._ui.duplicate_button.setEnabled(enabled)
 
     @Slot(QModelIndex, QModelIndex)
     def _change_flattened_mappings(self, current, previous):
@@ -204,6 +213,7 @@ class ImportMappings:
         list_row = self._mappings_model.rowCount(table_index)
         command = CreateMapping(table_index.row(), self._mappings_model, list_row)
         self._undo_stack.push(command)
+        self._set_mapping_list_remove_duplicate_enabled(True)
 
     @Slot()
     def _duplicate_selected_mapping(self):
@@ -240,6 +250,8 @@ class ImportMappings:
             for row in reversed(rows):
                 self._undo_stack.push(DeleteMapping(table_row, self._mappings_model, row))
             self._undo_stack.endMacro()
+        if not self._ui.mapping_list.model()._mappings[indexes[0].parent().row()].mapping_list:
+            self._set_mapping_list_remove_duplicate_enabled(False)
 
     @Slot(QPoint)
     def _show_mapping_list_context_menu(self, pos):
